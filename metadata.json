@@ -1,6 +1,6 @@
 {
 	"shell-version": ["3.2.1"], 
-	"uuid": "SimpleAltTab@devpower.org", 
+	"uuid": "WorkspaceAltTab@devpower.org", 
 	"name": "Simple Alt-Tab", 
 	"description": "fix alt tab behavior"
 }
