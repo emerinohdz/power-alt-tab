@@ -9,15 +9,12 @@ const Meta = imports.gi.Meta;
 const Lang = imports.lang;
 const AltTab = imports.ui.altTab;
 
-function SimpleAltTab() {
-	this._init();
+function WindowSwitcher(windows) {
+	this._init(windows);
 }
 
-SimpleAltTab.prototype = {
-	_init: function() {
-        let tracker = Shell.WindowTracker.get_default();
-//        tracker.connect('notify::focus-app', Lang.bind(this, this._focusChanged));
-
+WindowSwitcher.prototype = {
+	_init: function(windows) {
         this.actor = new Shell.GenericContainer({ name: 'altTabInvisiblePopup',
                                                   reactive: true,
                                                   visible: false });
@@ -26,20 +23,19 @@ SimpleAltTab.prototype = {
         this.actor.connect('get-preferred-height', Lang.bind(this, this._getPreferredHeight));
         this.actor.connect('allocate', Lang.bind(this, this._allocate));
         this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
-//		this.actor.set_size(1280, 800);
-//		this.actor.set_x(0);
-//		this.actor.set_y(0);
+
+		this._windows = windows;
+		this._thumbnails = null;
+		this._modifierMask = null;
+		this._initialDelayTimeoutId = 0;
+		this._currentIndex = 0;
+		this._haveModal = false;
+
+		if (!global.display.focus_window) {
+			this._currentIndex = -1;
+		}
 
         Main.uiGroup.add_actor(this.actor);
-
-		this._haveModal = false;
-		this._windows = null;
-		this._lastWindow = null;
-		this._currentWindow = null;
-		this._currentWindowIndex = 0;
-		this._thumbnails = null;
-		this._initialDelayTimeoutId = 0;
-		this._modifierMask = null;
 	},
 
     _getPreferredWidth: function (actor, forHeight, alloc) {
@@ -74,69 +70,15 @@ SimpleAltTab.prototype = {
 		}
     },
 
-	_initWindowList: function() {
-		this._windows = [];
-		this._lastWindow = null;
-		this._currentWindow = null;
-		this._currentWindowIndex = 0;
-
-		let windowActors = global.get_window_actors();
-
-		for (let i in windowActors) {
-			let win = windowActors[i].get_meta_window();
-
-			if (win.has_focus()) {
-			}
-
-			this._windows.push(win);
-		}
-
-//		this._windows.sort(Lang.bind(this, this._sortWindows));
-//		this._windows.unshift(this._lastFocused);
-	},
-
-	_focusChanged: function() {
-		this._lastWindow = this._currentWindow;
-
-		if (global.display.focus_window) {
-			this._currentWindow = global.display.focus_window;
-		}
-	},
-
 	show: function(shellwm, binding, mask, window, backwards) {
         if (!Main.pushModal(this.actor))
             return false;
-
-		if (!this._windows) {
-			this._initWindowList();
-		}
 
 		this._haveModal = true;
         this._modifierMask = AltTab.primaryModifier(mask);
 
         this.actor.connect('key-press-event', Lang.bind(this, this._keyPressEvent));
         this.actor.connect('key-release-event', Lang.bind(this, this._keyReleaseEvent));
-
-		/*
-		this._windows = this._windows.filter(function(win) {
-			return win != this._lastWindow && win != this._currentWindow;
-		});*/
-
-		this._windows.sort(Lang.bind(this, this._sortWindows));
-
-		/*
-		if (this._lastWindow) {
-			this._windows.unshift(this._lastWindow);
-		} 
-
-		if (this._currentWindow) {
-			this._windows.push(this._currentWindow);
-		}
-		*/
-
-//		if (this._thumbnails) {
-//			this.actor.remove_actor(this._thumbnails.actor);
-//		}
 
 		this._thumbnails = new AltTab.ThumbnailList(this._windows);
         this.actor.add_actor(this._thumbnails.actor);
@@ -148,10 +90,6 @@ SimpleAltTab.prototype = {
         this.actor.show();
         this.actor.get_allocation_box();
 
-//		this._showNextWindow();
-
-//        this.actor.show();
-
 		this._nextWindow();
 
         // There's a race condition; if the user released Alt before
@@ -159,11 +97,10 @@ SimpleAltTab.prototype = {
         // https://bugzilla.gnome.org/show_bug.cgi?id=596695 for
         // details.) So we check now. (Have to do this after updating
         // selection.)
-
         let [x, y, mods] = global.get_pointer();
         if (!(mods & this._modifierMask)) {
-			Main.activateWindow(this._windows[this._currentWindowIndex]);
-            this._onDestroy();
+			this._activateSelected();
+
 			return false;
         }
 
@@ -174,31 +111,18 @@ SimpleAltTab.prototype = {
                                                                this.actor.opacity = 255;
                                                                this._initialDelayTimeoutId = 0;
                                                            }));
+
+		return true;
 	},
 
-    _sortWindows : function(win1, win2) {
-		let t1 = win1.get_user_time();
-		let t2 = win2.get_user_time();
-
-		if (t2 > t1) {
-			return 1;
-		} else {
-			return -1;
-		}
-    },
-
 	_nextWindow: function() {
-		if ((this._currentWindowIndex + 1) == this._windows.length) {
-			this._currentWindowIndex = 0;
+		if ((this._currentIndex + 1) == this._windows.length) {
+			this._currentIndex = 0;
 		} else {
-			this._currentWindowIndex++;
+			this._currentIndex++;
 		}
 
-		this._thumbnails.highlight(this._currentWindowIndex, true);
-//		Main.activateWindow(this._windows[this._currentWindowIndex]);
-
-//		this._currentWindow.show();
-//		this.actor.show();
+		this._thumbnails.highlight(this._currentIndex, true);
 	},
 
     _keyPressEvent : function(actor, event) {
@@ -209,7 +133,6 @@ SimpleAltTab.prototype = {
         let action = global.display.get_keybinding_action(event.get_key_code(), event_state);
 
         if (keysym == Clutter.Escape) {
-//			Main.activateWindow(this._windows[this._windows.length - 1]);
             this.destroy();
         } else if (action == Meta.KeyBindingAction.SWITCH_GROUP) {
 			global.log("Switch group");
@@ -230,9 +153,7 @@ SimpleAltTab.prototype = {
         let state = mods & this._modifierMask;
 
         if (state == 0) {
-			global.log("Switching Workspace!");			
-			Main.activateWindow(this._windows[this._currentWindowIndex]);
-			this.destroy();
+			this._activateSelected();
 		}
 
         return true;
@@ -245,13 +166,18 @@ SimpleAltTab.prototype = {
         }
     },
 
+	_activateSelected: function() {
+		Main.activateWindow(this._windows[this._currentIndex]);
+
+		this.destroy();
+	},
+
 	_onDestroy: function() {
 		this._popModal();
 
 		this._windows = null;
 		this._currentWindow = null;
 		this._thumbnails = null;
-//		this._focusChanged();
 
         if (this._initialDelayTimeoutId != 0)
             Mainloop.source_remove(this._initialDelayTimeoutId);
@@ -264,31 +190,127 @@ SimpleAltTab.prototype = {
 	}
 }
 
-let simpleAltTab;
+/**
+ * This class handles windows events, so we can track the most
+ * recently focused window and keep a queue of them.
+ *
+ */
+function Manager() {
+	this._init();
+}
+
+Manager.prototype = {
+	_init: function() {
+        let tracker = Shell.WindowTracker.get_default();
+        tracker.connect('notify::focus-app', Lang.bind(this, this._focusChanged));
+
+		global.screen.connect("notify::n-workspaces", Lang.bind(this, this._changeWorkspaces));
+		this._windows = [];
+
+		this._changeWorkspaces();
+	}, 
+
+	_changeWorkspaces: function() {
+		for ( let i=0; i < global.screen.n_workspaces; ++i ) {
+            let ws = global.screen.get_workspace_by_index(i);
+
+			if (ws._windowAddedId) {
+				ws.disconnect(ws._windowAddedId);
+				ws.disconnect(ws._windowRemovedId);
+			}
+
+            ws._windowAddedId = ws.connect('window-added',
+                                    Lang.bind(this, this._windowAdded));
+            ws._windowRemovedId = ws.connect('window-removed',
+                                    Lang.bind(this, this._windowRemoved));
+        }
+	},
+
+	_windowAdded: function(metaWorkspace, metaWindow) {
+		this._windows.push(metaWindow);
+    },
+
+    _windowRemoved: function(metaWorkspace, metaWindow) {
+		let windowIndex = this._windows.indexOf(metaWindow);
+
+		if (windowIndex != -1) {
+			this._windows.splice(windowIndex, 1);
+		}
+    },
+
+	_initWindowList: function() {
+		this._windows = [];
+
+		let windowActors = global.get_window_actors();
+
+		for (let i in windowActors) {
+			let win = windowActors[i].get_meta_window();
+
+			this._windows.push(win);
+		}
+
+		// Sort windows by user time
+		this._windows.sort(Lang.bind(this, this._sortWindows));
+	},
+
+	_focusChanged: function() {
+		if (!this._windows.length) {
+			this._initWindowList();
+		}
+
+		let focusedWindow = global.display.focus_window;
+
+		if (focusedWindow) {
+			let windowIndex = this._windows.indexOf(focusedWindow);
+
+			if (windowIndex != -1) {
+				// move window to the head of the queue
+				this._windows.splice(windowIndex, 1);
+			} 		
+
+			this._windows.unshift(focusedWindow);
+		}
+	},
+
+    _sortWindows : function(win1, win2) {
+		let t1 = win1.get_user_time();
+		let t2 = win2.get_user_time();
+
+		if (t2 > t1) {
+			return 1;
+		} else {
+			return -1;
+		}
+    },
+
+	_startWindowSwitcher: function(shellwm, binding, mask, window, backwards) {
+		let windowSwitcher = new WindowSwitcher(this._windows);
+
+		if (!windowSwitcher.show(shellwm, binding, mask, window, backwards)) {
+			windowSwitcher.destroy();
+		}
+	}
+}
+
+let manager = null;
 
 function init() {
 }
 
-function altTab(shellwm, binding, mask, window, backwards) {
-	let simpleAltTab = new SimpleAltTab();
-
-	simpleAltTab.show(shellwm, binding, mask, window, backwards);
-}
-
 function enable() {
-	if (!simpleAltTab) {
-		simpleAltTab = new SimpleAltTab();
+	if (!manager) {
+		manager = new Manager();
 	}
 
-    Main.wm.setKeybindingHandler('switch_windows', altTab);
-    Main.wm.setKeybindingHandler('switch_group', altTab);
-    Main.wm.setKeybindingHandler('switch_windows_backward', altTab);
-    Main.wm.setKeybindingHandler('switch_group_backward', altTab);
+    Main.wm.setKeybindingHandler('switch_windows', Lang.bind(manager, manager._startWindowSwitcher));
+    Main.wm.setKeybindingHandler('switch_group', Lang.bind(manager, manager._startWindowSwitcher));
+    Main.wm.setKeybindingHandler('switch_windows_backward', Lang.bind(manager, manager._startWindowSwitcher));
+    Main.wm.setKeybindingHandler('switch_group_backward', Lang.bind(manager, manager._startWindowSwitcher));
 }
 
 function disable() {
-	if (simpleAltTab) {
-		simpleAltTab = null;
+	if (manager) {
+		manager = null;
 	}
 
     Main.wm.setKeybindingHandler('switch_windows', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
