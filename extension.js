@@ -8,13 +8,117 @@ const Tweener = imports.ui.tweener;
 const Meta = imports.gi.Meta;
 const Lang = imports.lang;
 const AltTab = imports.ui.altTab;
+const WorkspaceThumbnail = imports.ui.workspaceThumbnail;
 
-function WindowSwitcher(windows) {
-	this._init(windows);
+function WorkspacesThumbnailList(workspaces) {
+	this._init(workspaces);
 }
 
-WindowSwitcher.prototype = {
-	_init: function(windows) {
+WorkspacesThumbnailList.prototype = {
+	__proto__: AltTab.SwitcherList.prototype,
+
+	_init: function(workspaces) {
+        AltTab.SwitcherList.prototype._init.call(this);
+
+        let activeWorkspace = global.screen.get_active_workspace();
+        let panelHeight = Main.panel.actor.height;
+        let monitor = Main.layoutManager.primaryMonitor;
+
+        this._labels = new Array();
+        this._thumbnailBins = new Array();
+        this._clones = new Array();
+        this._workspaces = workspaces;
+		this._availHeight = 0;
+
+        this._porthole = {
+            x: monitor.x,
+            y: monitor.y + panelHeight,
+            width: monitor.width,
+            height: monitor.height - panelHeight
+        };
+
+        for (let i = 0; i < workspaces.length; i++) {
+            let box = new St.BoxLayout({ style_class: 'thumbnail-box',
+                                         vertical: true });
+
+            let bin = new St.Bin({ style_class: 'thumbnail' });
+
+            box.add_actor(bin);
+            this._thumbnailBins.push(bin);
+
+            let title = workspaces[i].index() + 1;
+			title = title.toString();
+
+			let name = new St.Label({ text: title });
+			// St.Label doesn't support text-align so use a Bin
+			let bin2 = new St.Bin({ x_align: St.Align.MIDDLE });
+			this._labels.push(bin2);
+			bin2.add_actor(name);
+			box.add_actor(bin2);
+
+			this.addItem(box, name);
+
+        }
+	},
+
+	// We need to scale the workspaces here
+	_allocate: function(actor, box, flags) {
+        AltTab.SwitcherList.prototype._allocate.call(this, actor, box, flags);
+
+        let panelHeight = Main.panel.actor.height;
+		let scale = Math.min(1.0, 
+				AltTab.THUMBNAIL_DEFAULT_SIZE / this._porthole.width, 
+				this._availHeight / this._porthole.height);
+
+		let childBox = new Clutter.ActorBox();
+
+		childBox.x1 = 0;
+		childBox.x2 = this._porthole.width;
+		childBox.y1 = panelHeight;
+		childBox.y2 = this._porthole.height;
+
+		for (let i = 0; i < this._clones.length; i++) {
+			this._clones[i].set_scale(scale, scale);
+			this._clones[i].allocate(childBox, flags);
+		}
+	},
+
+    addClones : function (availHeight) {
+        if (!this._thumbnailBins.length)
+            return;
+        let totalPadding = this._items[0].get_theme_node().get_horizontal_padding() + this._items[0].get_theme_node().get_vertical_padding();
+        totalPadding += this.actor.get_theme_node().get_horizontal_padding() + this.actor.get_theme_node().get_vertical_padding();
+        let [labelMinHeight, labelNaturalHeight] = this._labels[0].get_preferred_height(-1);
+        let spacing = this._items[0].child.get_theme_node().get_length('spacing');
+
+        availHeight = Math.min(availHeight - labelNaturalHeight - totalPadding - spacing, AltTab.THUMBNAIL_DEFAULT_SIZE);
+        let binHeight = availHeight + this._items[0].get_theme_node().get_vertical_padding() + this.actor.get_theme_node().get_vertical_padding() - spacing;
+        binHeight = Math.min(AltTab.THUMBNAIL_DEFAULT_SIZE, binHeight);
+
+        for (let i = 0; i < this._thumbnailBins.length; i++) {
+            let workspace = this._workspaces[i];
+
+			let clone = new WorkspaceThumbnail.WorkspaceThumbnail(workspace);
+            clone.setPorthole(this._porthole.x, this._porthole.y,
+							  this._porthole.width, this._porthole.height);
+
+            this._thumbnailBins[i].set_height(binHeight);
+            this._thumbnailBins[i].add_actor(clone.actor);
+            this._clones.push(clone.actor);
+        }
+
+        // Make sure we only do this once
+        this._thumbnailBins = new Array();
+		this._availHeight = availHeight;
+    }
+}
+
+function Switcher(list, thumbnails, activateSelected) {
+	this._init(list, thumbnails, activateSelected);
+}
+
+Switcher.prototype = {
+	_init: function(list, thumbnails, activateSelected) {
         this.actor = new Shell.GenericContainer({ name: 'altTabInvisiblePopup',
                                                   reactive: true,
                                                   visible: false });
@@ -24,16 +128,13 @@ WindowSwitcher.prototype = {
         this.actor.connect('allocate', Lang.bind(this, this._allocate));
         this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
 
-		this._windows = windows;
-		this._thumbnails = null;
+		this._list = list;
+		this._thumbnails = thumbnails;
 		this._modifierMask = null;
 		this._initialDelayTimeoutId = 0;
 		this._currentIndex = 0;
+		this._onActivateSelected = activateSelected;
 		this._haveModal = false;
-
-		if (!global.display.focus_window) {
-			this._currentIndex = -1;
-		}
 
         Main.uiGroup.add_actor(this.actor);
 	},
@@ -76,17 +177,11 @@ WindowSwitcher.prototype = {
 
 		this._haveModal = true;
 
-		if (this._windows.length == 1) {
-			this.destroy();
-			return false;
-		}
-
         this._modifierMask = AltTab.primaryModifier(mask);
 
         this.actor.connect('key-press-event', Lang.bind(this, this._keyPressEvent));
         this.actor.connect('key-release-event', Lang.bind(this, this._keyReleaseEvent));
 
-		this._thumbnails = new AltTab.ThumbnailList(this._windows);
         this.actor.add_actor(this._thumbnails.actor);
         this._thumbnails.actor.get_allocation_box();
 
@@ -96,7 +191,7 @@ WindowSwitcher.prototype = {
         this.actor.show();
         this.actor.get_allocation_box();
 
-		this._nextWindow();
+		this._next();
 
         // There's a race condition; if the user released Alt before
         // we got the grab, then we won't be notified. (See
@@ -121,8 +216,8 @@ WindowSwitcher.prototype = {
 		return true;
 	},
 
-	_nextWindow: function() {
-		if ((this._currentIndex + 1) == this._windows.length) {
+	_next: function() {
+		if ((this._currentIndex + 1) == this._list.length) {
 			this._currentIndex = 0;
 		} else {
 			this._currentIndex++;
@@ -131,9 +226,9 @@ WindowSwitcher.prototype = {
 		this._thumbnails.highlight(this._currentIndex, true);
 	},
 
-	_previousWindow: function() {
+	_previous: function() {
 		if (this._currentIndex == 0) {
-			this._currentIndex = this._windows.length - 1;
+			this._currentIndex = this._list.length - 1;
 		} else {
 			this._currentIndex--;
 		}
@@ -151,13 +246,13 @@ WindowSwitcher.prototype = {
         if (keysym == Clutter.Escape) {
             this.destroy();
         } else if (action == Meta.KeyBindingAction.SWITCH_GROUP) {
-			!backwards ? this._nextWindow() : this._previousWindow();
+			!backwards ? this._next() : this._previous();
         } else if (action == Meta.KeyBindingAction.SWITCH_GROUP_BACKWARD) {
-			this._previousWindow();
+			this._previous();
         } else if (action == Meta.KeyBindingAction.SWITCH_WINDOWS) {
-			!backwards ? this._nextWindow() : this._previousWindow();
+			!backwards ? this._next() : this._previous();
         } else if (action == Meta.KeyBindingAction.SWITCH_WINDOWS_BACKWARD) {
-			this._previousWindow();
+			this._previous();
 		}
 
         return true;
@@ -182,7 +277,7 @@ WindowSwitcher.prototype = {
     },
 
 	_activateSelected: function() {
-		Main.activateWindow(this._windows[this._currentIndex]);
+		this._onActivateSelected(this._list[this._currentIndex]);
 
 		this.destroy();
 	},
@@ -190,8 +285,7 @@ WindowSwitcher.prototype = {
 	_onDestroy: function() {
 		this._popModal();
 
-		this._windows = null;
-		this._currentWindow = null;
+		this._list= null;
 		this._thumbnails = null;
 
         if (this._initialDelayTimeoutId != 0)
@@ -206,8 +300,8 @@ WindowSwitcher.prototype = {
 }
 
 /**
- * This class handles windows events, so we can track the most
- * recently focused window and keep a queue of them.
+ * This class handles window and workspace events, so we can keep a
+ * stack of these two ordered by the most recently focused component.
  *
  */
 function Manager() {
@@ -220,12 +314,17 @@ Manager.prototype = {
         tracker.connect('notify::focus-app', Lang.bind(this, this._focusChanged));
 
 		global.screen.connect("notify::n-workspaces", Lang.bind(this, this._changeWorkspaces));
+        global.window_manager.connect('switch-workspace', Lang.bind(this, this._switchWorkspace));
+
 		this._windows = [];
+		this._workspaces = [];
 
 		this._changeWorkspaces();
 	}, 
 
 	_changeWorkspaces: function() {
+		this._workspaces = [];
+
 		for ( let i=0; i < global.screen.n_workspaces; ++i ) {
             let ws = global.screen.get_workspace_by_index(i);
 
@@ -238,12 +337,25 @@ Manager.prototype = {
                                     Lang.bind(this, this._windowAdded));
             ws._windowRemovedId = ws.connect('window-removed',
                                     Lang.bind(this, this._windowRemoved));
+
+			this._workspaces.push(ws);
         }
+	},
+
+	_switchWorkspace: function() {
+		let workspace = global.screen.get_active_workspace();
+		let workspaceIndex = this._workspaces.indexOf(workspace);
+
+		if (workspaceIndex != -1) {
+			this._workspaces.splice(workspaceIndex, 1);
+		}
+
+		this._workspaces.unshift(workspace);
 	},
 
 	_windowAdded: function(metaWorkspace, metaWindow) {
 		if (this._windows.indexOf(metaWindow) == -1) {
-			this._windows.push(metaWindow);
+			this._windows.splice(1, 0, metaWindow);
 		}
     },
 
@@ -281,10 +393,11 @@ Manager.prototype = {
 			let windowIndex = this._windows.indexOf(focusedWindow);
 
 			if (windowIndex != -1) {
-				// move window to the head of the queue
+				// remove the window from the list first
 				this._windows.splice(windowIndex, 1);
 			} 		
 
+			// stack the window
 			this._windows.unshift(focusedWindow);
 		}
 	},
@@ -300,23 +413,53 @@ Manager.prototype = {
 		}
     },
 
+	_activateSelectedWorkspace: function(workspace) {
+		workspace.activate(global.get_current_time());
+	},
+
+	_activateSelectedWindow: function(win) {
+		Main.activateWindow(win);
+	},
+
 	_startWindowSwitcher: function(shellwm, binding, mask, window, backwards) {
-		let windows = null;
-
-		if (binding == "switch_windows") {
-			windows = this._windows;
-		} else {
-			let currentWorkspace = global.screen.get_active_workspace();
-
-			windows = this._windows.filter(function(win) {
-				return win.get_workspace() == currentWorkspace;
-			});
+		if (!this._workspaces.length) {
+			this._changeWorkspaces();
 		}
 
-		let windowSwitcher = new WindowSwitcher(windows);
+		let list = null;
+		let thumbnails = null;
+		let onActivateSelected = null;
+		let currentWorkspace = global.screen.get_active_workspace();
+		let currentIndex = 0;
 
-		if (!windowSwitcher.show(shellwm, binding, mask, window, backwards)) {
-			windowSwitcher.destroy();
+		if (binding == "switch_windows") {
+			list = this._workspaces;
+			thumbnails = new WorkspacesThumbnailList(list);
+			onActivateSelected = this._activateSelectedWorkspace;
+		} else {
+			list = this._windows.filter(function(win) {
+				return win.get_workspace() == currentWorkspace;
+			});
+
+			if (list.length == 1 && list[0].get_workspace() == currentWorkspace) {
+				return;
+			}
+
+			thumbnails = new AltTab.ThumbnailList(list);
+			onActivateSelected = this._activateSelectedWindow;
+
+			if (!global.display.focus_window) {
+				currentIndex = -1;
+			}
+		}
+
+		if (list.length) {
+			let switcher = new Switcher(list, thumbnails, onActivateSelected);
+			switcher._currentIndex = currentIndex;
+
+			if (!switcher.show(shellwm, binding, mask, window, backwards)) {
+				switcher.destroy();
+			}
 		}
 	}
 }
