@@ -1,6 +1,6 @@
 {
 	"shell-version": ["3.2.1"], 
-	"uuid": "WorkspaceAltTab@devpower.org", 
-	"name": "Workspace Alt-Tab", 
-	"description": "fix alt tab behavior"
+	"uuid": "PowerAltTab@devpower.org", 
+	"name": "Power Alt-Tab", 
+	"description": "Replace alt tab behavior, iterate over available workspaces and windows"
 }
