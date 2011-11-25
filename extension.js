@@ -75,6 +75,12 @@ WindowSwitcher.prototype = {
             return false;
 
 		this._haveModal = true;
+
+		if (this._windows.length == 1) {
+			this.destroy();
+			return false;
+		}
+
         this._modifierMask = AltTab.primaryModifier(mask);
 
         this.actor.connect('key-press-event', Lang.bind(this, this._keyPressEvent));
@@ -125,6 +131,16 @@ WindowSwitcher.prototype = {
 		this._thumbnails.highlight(this._currentIndex, true);
 	},
 
+	_previousWindow: function() {
+		if (this._currentIndex == 0) {
+			this._currentIndex = this._windows.length - 1;
+		} else {
+			this._currentIndex--;
+		}
+
+		this._thumbnails.highlight(this._currentIndex, true);
+	},
+
     _keyPressEvent : function(actor, event) {
         let keysym = event.get_key_symbol();
         let event_state = Shell.get_event_state(event);
@@ -135,14 +151,13 @@ WindowSwitcher.prototype = {
         if (keysym == Clutter.Escape) {
             this.destroy();
         } else if (action == Meta.KeyBindingAction.SWITCH_GROUP) {
-			global.log("Switch group");
+			!backwards ? this._nextWindow() : this._previousWindow();
         } else if (action == Meta.KeyBindingAction.SWITCH_GROUP_BACKWARD) {
-			global.log("switch group backwards");
+			this._previousWindow();
         } else if (action == Meta.KeyBindingAction.SWITCH_WINDOWS) {
-			this._nextWindow();
-			global.log("switch windows");
+			!backwards ? this._nextWindow() : this._previousWindow();
         } else if (action == Meta.KeyBindingAction.SWITCH_WINDOWS_BACKWARD) {
-			global.log("switch windows backwards");
+			this._previousWindow();
 		}
 
         return true;
@@ -227,7 +242,9 @@ Manager.prototype = {
 	},
 
 	_windowAdded: function(metaWorkspace, metaWindow) {
-		this._windows.push(metaWindow);
+		if (this._windows.indexOf(metaWindow) == -1) {
+			this._windows.push(metaWindow);
+		}
     },
 
     _windowRemoved: function(metaWorkspace, metaWindow) {
@@ -284,7 +301,19 @@ Manager.prototype = {
     },
 
 	_startWindowSwitcher: function(shellwm, binding, mask, window, backwards) {
-		let windowSwitcher = new WindowSwitcher(this._windows);
+		let windows = null;
+
+		if (binding == "switch_windows") {
+			windows = this._windows;
+		} else {
+			let currentWorkspace = global.screen.get_active_workspace();
+
+			windows = this._windows.filter(function(win) {
+				return win.get_workspace() == currentWorkspace;
+			});
+		}
+
+		let windowSwitcher = new WindowSwitcher(windows);
 
 		if (!windowSwitcher.show(shellwm, binding, mask, window, backwards)) {
 			windowSwitcher.destroy();
