@@ -1,3 +1,10 @@
+/**
+ * Power Alt-Tab
+ * @autor: emerino <donvodka at gmail dot com>
+ *
+ * Some code reused (and some stolen) from ui.altTab script.
+ */
+
 
 const Clutter = imports.gi.Clutter;
 const St = imports.gi.St;
@@ -323,7 +330,7 @@ Manager.prototype = {
 	}, 
 
 	_changeWorkspaces: function() {
-		this._workspaces = [];
+		let workspaces = [];
 
 		for ( let i=0; i < global.screen.n_workspaces; ++i ) {
             let ws = global.screen.get_workspace_by_index(i);
@@ -338,19 +345,39 @@ Manager.prototype = {
             ws._windowRemovedId = ws.connect('window-removed',
                                     Lang.bind(this, this._windowRemoved));
 
-			this._workspaces.push(ws);
+			workspaces.push(ws);
         }
+
+		if (this._workspaces.length) {
+			let orderedWorkspaces = [];
+
+			for (let i in this._workspaces) {
+				let ws = this._workspaces[i];
+
+				let index = workspaces.indexOf(ws);
+
+				if (index != -1) {
+					workspaces.splice(index, 1);
+
+					orderedWorkspaces.push(ws);
+				}
+			}
+
+			workspaces = orderedWorkspaces.concat(workspaces);
+		} 
+
+		this._workspaces = workspaces;
 	},
 
 	_switchWorkspace: function() {
-		let workspace = global.screen.get_active_workspace();
-		let workspaceIndex = this._workspaces.indexOf(workspace);
+		let currentWorkspace = global.screen.get_active_workspace();
+		let workspaceIndex = this._workspaces.indexOf(currentWorkspace);
 
 		if (workspaceIndex != -1) {
 			this._workspaces.splice(workspaceIndex, 1);
 		}
 
-		this._workspaces.unshift(workspace);
+		this._workspaces.unshift(currentWorkspace);
 	},
 
 	_windowAdded: function(metaWorkspace, metaWindow) {
