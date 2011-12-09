@@ -8,6 +8,8 @@ Replacing means two things:
 1) The binding for "switch_windows" now iterates over the available workspaces, ordered by most recently used.
 2) The binding for "switch_group" now iterates over the windows in the current workspace, ordered by most recently used (old alt-tab behaviour).
 
+BEHAVIOR WITH DEFAULT KEYBOARD SHORTCUTS: Alt-Tab iterates over workspaces, Alt + the key above Tab iterates over windows.
+
 When iterating over windows/workspaces, a list of thumbnails for each is displayed on the screen.
 
 This is useful when you have lots of workspaces available, with specific windows on each, so navigating through all your windows is much easier. The idea was taken from the Xmonad contrib module that does the same thing (iterates over workspaces using alt-tab).
