@@ -2,6 +2,6 @@
 	"shell-version": ["3.2.1"], 
 	"uuid": "PowerAltTab@devpower.org", 
 	"name": "Power Alt-Tab", 
-	"description": "Replace alt tab behavior, iterate over available workspaces and windows",
+	"description": "Replace alt tab behavior, iterate over available workspaces and windows (view README for more information)",
 	"url": "http://github.com/emerinohdz/PowerAltTab"
 }
