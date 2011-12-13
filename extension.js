@@ -125,7 +125,7 @@ function Switcher(list, thumbnails, activateSelected) {
 }
 
 Switcher.prototype = {
-	_init: function(list, thumbnails, activateSelected) {
+	_init: function(list, thumbnails, actions) {
         this.actor = new Shell.GenericContainer({ name: 'altTabInvisiblePopup',
                                                   reactive: true,
                                                   visible: false });
@@ -140,7 +140,7 @@ Switcher.prototype = {
 		this._modifierMask = null;
 		this._initialDelayTimeoutId = 0;
 		this._currentIndex = 0;
-		this._onActivateSelected = activateSelected;
+		this._actions = actions;
 		this._haveModal = false;
 
         Main.uiGroup.add_actor(this.actor);
@@ -252,6 +252,9 @@ Switcher.prototype = {
 
         if (keysym == Clutter.Escape) {
             this.destroy();
+        } else if (keysym == Clutter.q || keysym == Clutter.Q) {
+			this._actions["remove_selected"](this._list[this._currentIndex]);
+			this.destroy();
         } else if (action == Meta.KeyBindingAction.SWITCH_GROUP) {
 			!backwards ? this._next() : this._previous();
         } else if (action == Meta.KeyBindingAction.SWITCH_GROUP_BACKWARD) {
@@ -284,7 +287,7 @@ Switcher.prototype = {
     },
 
 	_activateSelected: function() {
-		this._onActivateSelected(this._list[this._currentIndex]);
+		this._actions["activate_selected"](this._list[this._currentIndex]);
 
 		this.destroy();
 	},
@@ -448,6 +451,14 @@ Manager.prototype = {
 		Main.activateWindow(win);
 	},
 
+	_removeSelectedWindow: function(win) {
+		win.delete(global.get_current_time());
+	},
+
+	_removeSelectedWorkspace: function(workspace) {
+		// DO NOTHING
+	},
+
 	_startWindowSwitcher: function(shellwm, binding, mask, window, backwards) {
 		if (!this._workspaces.length) {
 			this._changeWorkspaces();
@@ -455,17 +466,18 @@ Manager.prototype = {
 
 		let list = null;
 		let thumbnails = null;
-		let onActivateSelected = null;
+		let actions = {};
 		let currentWorkspace = global.screen.get_active_workspace();
 		let currentIndex = 0;
 
 		if (binding == "switch_windows") {
 			list = this._workspaces;
 			thumbnails = new WorkspacesThumbnailList(list);
-			onActivateSelected = this._activateSelectedWorkspace;
+			actions["activate_selected"] = this._activateSelectedWorkspace;
+			actions["remove_selected"] = this._removeSelectedWorkspace;
 		} else {
 			list = this._windows.filter(function(win) {
-				return win.get_workspace() == currentWorkspace;
+				return win.get_workspace() == currentWorkspace && !win.is_skip_taskbar();
 			});
 
 			if (list.length == 1 && list[0].get_workspace() == currentWorkspace) {
@@ -473,7 +485,8 @@ Manager.prototype = {
 			}
 
 			thumbnails = new AltTab.ThumbnailList(list);
-			onActivateSelected = this._activateSelectedWindow;
+			actions["activate_selected"] = this._activateSelectedWindow;
+			actions["remove_selected"] = this._removeSelectedWindow;
 
 			if (!global.display.focus_window) {
 				currentIndex = -1;
@@ -481,7 +494,7 @@ Manager.prototype = {
 		}
 
 		if (list.length) {
-			let switcher = new Switcher(list, thumbnails, onActivateSelected);
+			let switcher = new Switcher(list, thumbnails, actions);
 			switcher._currentIndex = currentIndex;
 
 			if (!switcher.show(shellwm, binding, mask, window, backwards)) {
