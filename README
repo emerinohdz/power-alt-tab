@@ -17,6 +17,5 @@ This is useful when you have lots of workspaces available, with specific windows
 
 Installation instructions:
 
-cd ~/.local/share/gnome-shell/extensions
-git clone git@github.com:emerinohdz/PowerAltTab.git
-mv PowerAltTab PowerAltTab@devpower.org 
+git clone git@github.com:emerinohdz/PowerAltTab.git ~/.local/share/gnome-shell/extensions/PowerAltTab@devpower.org
+
