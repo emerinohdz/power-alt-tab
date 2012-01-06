@@ -470,7 +470,7 @@ Manager.prototype = {
 		let currentWorkspace = global.screen.get_active_workspace();
 		let currentIndex = 0;
 
-		if (binding == "switch_windows") {
+		if (binding != "switch_windows") {
 			list = this._workspaces;
 			thumbnails = new WorkspacesThumbnailList(list);
 			actions["activate_selected"] = this._activateSelectedWorkspace;
@@ -480,7 +480,7 @@ Manager.prototype = {
 				return win.get_workspace() == currentWorkspace && !win.is_skip_taskbar();
 			});
 
-			if (list.length == 1 && list[0].get_workspace() == currentWorkspace) {
+			if (list.length == 1 && list[0].get_workspace() == currentWorkspace && !list[0].is_hidden()) {
 				return;
 			}
 
