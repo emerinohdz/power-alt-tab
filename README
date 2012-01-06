@@ -5,8 +5,8 @@ Gnome-Shell extension that replaces predefined Alt-Tab behaviour.
 
 Replacing means two things:
 
-1) The binding for "switch_windows" now iterates over the available workspaces, ordered by most recently used.
-2) The binding for "switch_group" now iterates over the windows in the current workspace, ordered by most recently used (old alt-tab behaviour). Additionally, it allows to close the selected window in the pager by typing the "q" key.
+1) The binding for "switch_group" now iterates over the available workspaces, ordered by most recently used.
+2) The binding for "switch_windows" now iterates over the windows in the current workspace, ordered by most recently used (old alt-tab behaviour). Additionally, it allows to close the selected window in the pager by typing the "q" key.
 
 BEHAVIOR WITH DEFAULT KEYBOARD SHORTCUTS: Alt-Tab iterates over workspaces, Alt + the key above Tab iterates over windows.
 
