@@ -5,7 +5,6 @@
  * Some code reused (and some stolen) from ui.altTab script.
  */
 
-
 const Clutter = imports.gi.Clutter;
 const St = imports.gi.St;
 const Shell = imports.gi.Shell;
@@ -17,12 +16,9 @@ const Lang = imports.lang;
 const AltTab = imports.ui.altTab;
 const WorkspaceThumbnail = imports.ui.workspaceThumbnail;
 
-function WorkspacesThumbnailList(workspaces) {
-	this._init(workspaces);
-}
-
-WorkspacesThumbnailList.prototype = {
-	__proto__: AltTab.SwitcherList.prototype,
+const WorkspacesThumbnailList = new Lang.Class({
+    Name: 'WorkspaceThumbnailList',
+	Extends: AltTab.SwitcherList,
 
 	_init: function(workspaces) {
         AltTab.SwitcherList.prototype._init.call(this);
@@ -118,13 +114,11 @@ WorkspacesThumbnailList.prototype = {
         this._thumbnailBins = new Array();
 		this._availHeight = availHeight;
     }
-}
+})
 
-function Switcher(list, thumbnails, activateSelected) {
-	this._init(list, thumbnails, activateSelected);
-}
+const Switcher = new Lang.Class ({
+    Name: 'Switcher',
 
-Switcher.prototype = {
 	_init: function(list, thumbnails, actions) {
         this.actor = new Shell.GenericContainer({ name: 'altTabInvisiblePopup',
                                                   reactive: true,
@@ -245,7 +239,7 @@ Switcher.prototype = {
 
     _keyPressEvent : function(actor, event) {
         let keysym = event.get_key_symbol();
-        let event_state = Shell.get_event_state(event);
+        let event_state = event.get_state();
 
         let backwards = event_state & Clutter.ModifierType.SHIFT_MASK;
         let action = global.display.get_keybinding_action(event.get_key_code(), event_state);
@@ -307,18 +301,16 @@ Switcher.prototype = {
 
 		this.actor.destroy();
 	}
-}
+})
 
 /**
  * This class handles window and workspace events, so we can keep a
  * stack of these two ordered by the most recently focused component.
  *
  */
-function Manager() {
-	this._init();
-}
+const Manager = new Lang.Class({
+    Name: 'Manager',
 
-Manager.prototype = {
 	_init: function() {
         let tracker = Shell.WindowTracker.get_default();
         tracker.connect('notify::focus-app', Lang.bind(this, this._focusChanged));
@@ -459,22 +451,26 @@ Manager.prototype = {
 		// DO NOTHING
 	},
 
-	_startWindowSwitcher: function(shellwm, binding, mask, window, backwards) {
+	_startWindowSwitcher: function(display, screen, window, binding) {
 		if (!this._workspaces.length) {
 			this._changeWorkspaces();
 		}
 
+        let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
+        let modifiers = binding.get_modifiers();
 		let list = null;
 		let thumbnails = null;
 		let actions = {};
 		let currentWorkspace = global.screen.get_active_workspace();
 		let currentIndex = 0;
 
-		if (binding != "switch_windows") {
+        global.log("binding: " + binding.get_name());
+
+		if (binding.get_name() != "switch-windows") {
 			list = this._workspaces;
 			thumbnails = new WorkspacesThumbnailList(list);
-			actions["activate_selected"] = this._activateSelectedWorkspace;
-			actions["remove_selected"] = this._removeSelectedWorkspace;
+            actions["activate_selected"] = this._activateSelectedWorkspace;
+            actions["remove_selected"] = this._removeSelectedWorkspace;
 		} else {
 			list = this._windows.filter(function(win) {
 				return win.get_workspace() == currentWorkspace && !win.is_skip_taskbar();
@@ -483,26 +479,27 @@ Manager.prototype = {
 			if (list.length == 1 && list[0].get_workspace() == currentWorkspace && !list[0].is_hidden()) {
 				return;
 			}
+            
+            actions["activate_selected"] = this._activateSelectedWindow;
+            actions["remove_selected"] = this._removeSelectedWindow;
 
 			thumbnails = new AltTab.ThumbnailList(list);
-			actions["activate_selected"] = this._activateSelectedWindow;
-			actions["remove_selected"] = this._removeSelectedWindow;
 
 			if (!global.display.focus_window) {
 				currentIndex = -1;
 			}
 		}
-
+        
 		if (list.length) {
 			let switcher = new Switcher(list, thumbnails, actions);
 			switcher._currentIndex = currentIndex;
 
-			if (!switcher.show(shellwm, binding, mask, window, backwards)) {
+			if (!switcher.show(backwards, binding.get_name(), binding.get_mask())) {
 				switcher.destroy();
 			}
 		}
 	}
-}
+})
 
 let manager = null;
 
@@ -514,10 +511,21 @@ function enable() {
 		manager = new Manager();
 	}
 
+	/*
     Main.wm.setKeybindingHandler('switch_windows', Lang.bind(manager, manager._startWindowSwitcher));
     Main.wm.setKeybindingHandler('switch_group', Lang.bind(manager, manager._startWindowSwitcher));
     Main.wm.setKeybindingHandler('switch_windows_backward', Lang.bind(manager, manager._startWindowSwitcher));
     Main.wm.setKeybindingHandler('switch_group_backward', Lang.bind(manager, manager._startWindowSwitcher));
+	*/
+
+	Meta.keybindings_set_custom_handler('switch-windows',
+										Lang.bind(manager, manager._startWindowSwitcher));
+	Meta.keybindings_set_custom_handler('switch-group',
+										Lang.bind(manager, manager._startWindowSwitcher));
+	Meta.keybindings_set_custom_handler('switch-windows-backward',
+										Lang.bind(manager, manager._startWindowSwitcher));
+	Meta.keybindings_set_custom_handler('switch-group-backward',
+										Lang.bind(manager, manager._startWindowSwitcher));
 }
 
 function disable() {
@@ -525,8 +533,10 @@ function disable() {
 		manager = null;
 	}
 
+	/*
     Main.wm.setKeybindingHandler('switch_windows', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
     Main.wm.setKeybindingHandler('switch_group', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
     Main.wm.setKeybindingHandler('switch_windows_backward', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
     Main.wm.setKeybindingHandler('switch_group_backward', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
+	*/
 }
