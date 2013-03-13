@@ -1,6 +1,6 @@
 /**
  * Power Alt-Tab
- * @autor: emerino <donvodka at gmail dot com>
+ * @autor: emerino <emerino at gmail dot com>
  *
  * Some code reused (and some stolen) from ui.altTab script.
  */
@@ -16,12 +16,20 @@ const Lang = imports.lang;
 const AltTab = imports.ui.altTab;
 const WorkspaceThumbnail = imports.ui.workspaceThumbnail;
 
+/**
+ * NOTE: It may not be safe to extend AltTab.SwitcherList because it doesn't 
+ * disconnects signals properly, however it'll only be a problem when
+ * enabling/disabling the extension constantly on the same gnome-shell
+ * instance.
+ */
+
 const WorkspacesThumbnailList = new Lang.Class({
     Name: 'WorkspaceThumbnailList',
-	Extends: AltTab.SwitcherList,
+	Extends: AltTab.SwitcherList, 
 
 	_init: function(workspaces) {
-        AltTab.SwitcherList.prototype._init.call(this);
+        this.parent();
+//        AltTab.SwitcherList.prototype._init.call(this);
 
         let activeWorkspace = global.screen.get_active_workspace();
         let panelHeight = Main.panel.actor.height;
@@ -66,6 +74,7 @@ const WorkspacesThumbnailList = new Lang.Class({
 
 	// We need to scale the workspaces here
 	_allocate: function(actor, box, flags) {
+        // TODO: how do we do this properly using new syntax?
         AltTab.SwitcherList.prototype._allocate.call(this, actor, box, flags);
 
         let panelHeight = Main.panel.actor.height;
@@ -308,7 +317,7 @@ const Switcher = new Lang.Class ({
  * stack of these two ordered by the most recently focused component.
  *
  */
-const Manager = new Lang.Class({
+const PowerAltTabManager = new Lang.Class({
     Name: 'Manager',
 
 	_init: function() {
@@ -456,8 +465,8 @@ const Manager = new Lang.Class({
 			this._changeWorkspaces();
 		}
 
-        let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
         let modifiers = binding.get_modifiers();
+        let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
 		let list = null;
 		let thumbnails = null;
 		let actions = {};
@@ -501,42 +510,45 @@ const Manager = new Lang.Class({
 	}
 })
 
-let manager = null;
+const PowerAltTab = new Lang.Class({
+    Name: "PowerAltTab",
+
+    _init: function() {
+        this.manager = null;
+    }, 
+
+    enable: function() {
+        this.manager = new PowerAltTabManager();
+        this._setKeybindingsHandler(this.manager, this.manager._startWindowSwitcher);
+    },
+
+    disable: function() {
+        this.manager = null;
+        this._setKeybindingsHandler(Main.wm, Main.wm._startAppSwitcher);
+    },
+        
+    _setKeybindingsHandler: function(handler, switcherStarter) {
+        Meta.keybindings_set_custom_handler('switch-windows',
+                                            Lang.bind(handler, switcherStarter));
+        Meta.keybindings_set_custom_handler('switch-group',
+                                            Lang.bind(handler, switcherStarter));
+        Meta.keybindings_set_custom_handler('switch-windows-backward',
+                                            Lang.bind(handler, switcherStarter));
+        Meta.keybindings_set_custom_handler('switch-group-backward',
+                                            Lang.bind(handler, switcherStarter));
+    }
+});
+
+let powerAltTab = null;
 
 function init() {
+    powerAltTab = new PowerAltTab();
 }
 
 function enable() {
-	if (!manager) {
-		manager = new Manager();
-	}
-
-	/*
-    Main.wm.setKeybindingHandler('switch_windows', Lang.bind(manager, manager._startWindowSwitcher));
-    Main.wm.setKeybindingHandler('switch_group', Lang.bind(manager, manager._startWindowSwitcher));
-    Main.wm.setKeybindingHandler('switch_windows_backward', Lang.bind(manager, manager._startWindowSwitcher));
-    Main.wm.setKeybindingHandler('switch_group_backward', Lang.bind(manager, manager._startWindowSwitcher));
-	*/
-
-	Meta.keybindings_set_custom_handler('switch-windows',
-										Lang.bind(manager, manager._startWindowSwitcher));
-	Meta.keybindings_set_custom_handler('switch-group',
-										Lang.bind(manager, manager._startWindowSwitcher));
-	Meta.keybindings_set_custom_handler('switch-windows-backward',
-										Lang.bind(manager, manager._startWindowSwitcher));
-	Meta.keybindings_set_custom_handler('switch-group-backward',
-										Lang.bind(manager, manager._startWindowSwitcher));
+    powerAltTab.enable();
 }
 
 function disable() {
-	if (manager) {
-		manager = null;
-	}
-
-	/*
-    Main.wm.setKeybindingHandler('switch_windows', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
-    Main.wm.setKeybindingHandler('switch_group', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
-    Main.wm.setKeybindingHandler('switch_windows_backward', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
-    Main.wm.setKeybindingHandler('switch_group_backward', Lang.bind(Main.wm, Main.wm._startAppSwitcher));
-	*/
+    powerAltTab.disable();
 }
