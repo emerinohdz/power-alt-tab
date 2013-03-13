@@ -473,8 +473,6 @@ const PowerAltTabManager = new Lang.Class({
 		let currentWorkspace = global.screen.get_active_workspace();
 		let currentIndex = 0;
 
-        global.log("binding: " + binding.get_name());
-
 		if (binding.get_name() != "switch-windows") {
 			list = this._workspaces;
 			thumbnails = new WorkspacesThumbnailList(list);
