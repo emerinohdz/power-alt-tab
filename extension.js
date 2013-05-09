@@ -15,6 +15,7 @@ const Meta = imports.gi.Meta;
 const Lang = imports.lang;
 const AltTab = imports.ui.altTab;
 const WorkspaceThumbnail = imports.ui.workspaceThumbnail;
+const SwitcherPopup = imports.ui.switcherPopup;
 
 /**
  * NOTE: It may not be safe to extend AltTab.SwitcherList because it doesn't 
@@ -25,11 +26,10 @@ const WorkspaceThumbnail = imports.ui.workspaceThumbnail;
 
 const WorkspacesThumbnailList = new Lang.Class({
     Name: 'WorkspaceThumbnailList',
-	Extends: AltTab.SwitcherList, 
+    Extends: SwitcherPopup.SwitcherList,
 
 	_init: function(workspaces) {
-        this.parent();
-//        AltTab.SwitcherList.prototype._init.call(this);
+        this.parent(true);
 
         let activeWorkspace = global.screen.get_active_workspace();
         let panelHeight = Main.panel.actor.height;
@@ -75,7 +75,8 @@ const WorkspacesThumbnailList = new Lang.Class({
 	// We need to scale the workspaces here
 	_allocate: function(actor, box, flags) {
         // TODO: how do we do this properly using new syntax?
-        AltTab.SwitcherList.prototype._allocate.call(this, actor, box, flags);
+//        AltTab.SwitcherList.prototype._allocate.call(this, actor, box, flags);
+		this.parent(actor, box, flags);
 
         let panelHeight = Main.panel.actor.height;
 		let scale = Math.min(1.0, 
@@ -125,41 +126,19 @@ const WorkspacesThumbnailList = new Lang.Class({
     }
 })
 
-const Switcher = new Lang.Class ({
-    Name: 'Switcher',
+const WorkspaceSwitcherPopup = new Lang.Class ({
+    Name: 'ThumbnailSwitcherPopup',
+    Extends: SwitcherPopup.SwitcherPopup,
 
-	_init: function(list, thumbnails, actions) {
-        this.actor = new Shell.GenericContainer({ name: 'altTabInvisiblePopup',
-                                                  reactive: true,
-                                                  visible: false });
+	_init: function(workspaces) {
+		this.parent();
 
-        this.actor.connect('get-preferred-width', Lang.bind(this, this._getPreferredWidth));
-        this.actor.connect('get-preferred-height', Lang.bind(this, this._getPreferredHeight));
-        this.actor.connect('allocate', Lang.bind(this, this._allocate));
-        this.actor.connect('destroy', Lang.bind(this, this._onDestroy));
-
-		this._list = list;
-		this._thumbnails = thumbnails;
-		this._modifierMask = null;
-		this._initialDelayTimeoutId = 0;
-		this._currentIndex = 0;
-		this._actions = actions;
-		this._haveModal = false;
-
-        Main.uiGroup.add_actor(this.actor);
+		this._workspaces = workspaces;
 	},
 
-    _getPreferredWidth: function (actor, forHeight, alloc) {
-        alloc.min_size = global.screen_width;
-        alloc.natural_size = global.screen_width;
-    },
-
-    _getPreferredHeight: function (actor, forWidth, alloc) {
-        alloc.min_size = global.screen_height;
-        alloc.natural_size = global.screen_height;
-    },
-
     _allocate: function (actor, box, flags) {
+		this._thumbnails = this._switcherList;
+
 		if (this._thumbnails) {
 			let childBox = new Clutter.ActorBox();
 			let primary = Main.layoutManager.primaryMonitor;
@@ -181,144 +160,87 @@ const Switcher = new Lang.Class ({
 		}
     },
 
-	show: function(shellwm, binding, mask, window, backwards) {
-        if (!Main.pushModal(this.actor))
-            return false;
+    _createSwitcher: function() {
+		this._switcherList = new WorkspacesThumbnailList(this._workspaces);
+		this._items = this._workspaces;
 
-		this._haveModal = true;
+        return true;
+    },
 
-        this._modifierMask = AltTab.primaryModifier(mask);
-
-        this.actor.connect('key-press-event', Lang.bind(this, this._keyPressEvent));
-        this.actor.connect('key-release-event', Lang.bind(this, this._keyReleaseEvent));
-
-        this.actor.add_actor(this._thumbnails.actor);
-        this._thumbnails.actor.get_allocation_box();
-
-        // Need to force an allocation so we can figure out whether we
-        // need to scroll when selecting
-        this.actor.opacity = 0;
-        this.actor.show();
-        this.actor.get_allocation_box();
-
-		this._next();
-
-        // There's a race condition; if the user released Alt before
-        // we got the grab, then we won't be notified. (See
-        // https://bugzilla.gnome.org/show_bug.cgi?id=596695 for
-        // details.) So we check now. (Have to do this after updating
-        // selection.)
-        let [x, y, mods] = global.get_pointer();
-        if (!(mods & this._modifierMask)) {
-			this._activateSelected();
-
-			return false;
-        }
-
-        // We delay showing the popup so that fast Alt+Tab users aren't
-        // disturbed by the popup briefly flashing.
-        this._initialDelayTimeoutId = Mainloop.timeout_add(AltTab.POPUP_DELAY_TIMEOUT,
-                                                           Lang.bind(this, function () {
-                                                               this.actor.opacity = 255;
-                                                               this._initialDelayTimeoutId = 0;
-                                                           }));
-
-		return true;
-	},
-
-	_next: function() {
-		if ((this._currentIndex + 1) == this._list.length) {
-			this._currentIndex = 0;
-		} else {
-			this._currentIndex++;
-		}
-
-		this._thumbnails.highlight(this._currentIndex, true);
-	},
-
-	_previous: function() {
-		if (this._currentIndex == 0) {
-			this._currentIndex = this._list.length - 1;
-		} else {
-			this._currentIndex--;
-		}
-
-		this._thumbnails.highlight(this._currentIndex, true);
-	},
-
-    _keyPressEvent : function(actor, event) {
-        let keysym = event.get_key_symbol();
-        let event_state = event.get_state();
-
-        let backwards = event_state & Clutter.ModifierType.SHIFT_MASK;
-        let action = global.display.get_keybinding_action(event.get_key_code(), event_state);
-
+    _keyPressHandler: function(keysym, backwards, action) {
         if (keysym == Clutter.Escape) {
             this.destroy();
         } else if (keysym == Clutter.q || keysym == Clutter.Q) {
-			this._actions["remove_selected"](this._list[this._currentIndex]);
 			this.destroy();
-        } else if (action == Meta.KeyBindingAction.SWITCH_GROUP) {
-			!backwards ? this._next() : this._previous();
-        } else if (action == Meta.KeyBindingAction.SWITCH_GROUP_BACKWARD) {
-			this._previous();
-        } else if (action == Meta.KeyBindingAction.SWITCH_WINDOWS) {
-			!backwards ? this._next() : this._previous();
-        } else if (action == Meta.KeyBindingAction.SWITCH_WINDOWS_BACKWARD) {
-			this._previous();
-		}
+        } else if (action == Meta.KeyBindingAction.SWITCH_GROUP || action == Meta.KeyBindingAction.SWITCH_APPLICATIONS) {
+			!backwards ? this._select(this._next()) : this._select(this._previous());
+        } else if (action == Meta.KeyBindingAction.SWITCH_GROUP_BACKWARD || action == Meta.KeyBindingAction.SWITCH_APPLICATIONS_BACKWARD) {
+			this._select(this._previous());
+        } 
 
         return true;
     },
 
-    _keyReleaseEvent : function(actor, event) {
-        let [x, y, mods] = global.get_pointer();
-        let state = mods & this._modifierMask;
-
-        if (state == 0) {
-			this._activateSelected();
-		}
-
-        return true;
-    },
-
-    _popModal: function() {
-        if (this._haveModal) {
-            Main.popModal(this.actor);
-            this._haveModal = false;
-        }
-    },
-
-	_activateSelected: function() {
-		this._actions["activate_selected"](this._list[this._currentIndex]);
-
-		this.destroy();
+    _initialSelection: function(backward, binding) {
+        if (binding == 'switch-windows-backward' || backward)
+            this._select(this._items.length - 1);
+        else if (this._items.length == 1)
+            this._select(0);
+        else
+            this._select(1);
 	},
 
-	_onDestroy: function() {
-		this._popModal();
+	_select: function(index) {
+		this.parent(index);
 
-		this._list= null;
-		this._thumbnails = null;
-
-        if (this._initialDelayTimeoutId != 0)
-            Mainloop.source_remove(this._initialDelayTimeoutId);
+        thumbnailsFocused = (window != null);
+        this._switcherList.highlight(index, thumbnailsFocused);
 	},
 
-	destroy: function() {
-		this._onDestroy();
+	_finish: function(timestamp) {
+		this._activateSelected(this._items[this._selectedIndex], timestamp);
 
-		this.actor.destroy();
-	}
+		this.parent();
+	},
+
+	_activateSelected: function(workspace, timestamp) {
+		workspace.activate(timestamp);
+	},
+
 })
 
+const WorkspaceWindowSwitcherPopup = new Lang.Class({
+	Name: "WorkspaceWindowSwitcherPopup",
+	Extends: AltTab.WindowSwitcherPopup,
+
+	_init: function(windows) {
+		this.parent();
+
+		this._windows = windows;
+	},
+
+	_getWindowList: function() {
+		let currentWorkspace = global.screen.get_active_workspace();
+
+		let list = this._windows.filter(function(win) {
+			return win.get_workspace() == currentWorkspace && !win.is_skip_taskbar();
+		});
+
+		if (list.length == 1 && list[0].get_workspace() == currentWorkspace && !list[0].is_hidden()) {
+			list = []; // disable
+		}
+
+		return list;
+	},
+
+})
 /**
  * This class handles window and workspace events, so we can keep a
  * stack of these two ordered by the most recently focused component.
  *
  */
-const PowerAltTabManager = new Lang.Class({
-    Name: 'Manager',
+const MRUAltTabManager = new Lang.Class({
+    Name: 'MRUAltTabManager',
 
 	_init: function() {
         let tracker = Shell.WindowTracker.get_default();
@@ -444,66 +366,32 @@ const PowerAltTabManager = new Lang.Class({
 		}
     },
 
-	_activateSelectedWorkspace: function(workspace) {
-		workspace.activate(global.get_current_time());
-	},
-
-	_activateSelectedWindow: function(win) {
-		Main.activateWindow(win);
-	},
-
-	_removeSelectedWindow: function(win) {
-		win.delete(global.get_current_time());
-	},
-
-	_removeSelectedWorkspace: function(workspace) {
-		// DO NOTHING
-	},
-
-	_startWindowSwitcher: function(display, screen, window, binding) {
+	_startWorkspaceSwitcher: function(display, screen, window, binding) {
 		if (!this._workspaces.length) {
 			this._changeWorkspaces();
 		}
 
         let modifiers = binding.get_modifiers();
         let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
-		let list = null;
-		let thumbnails = null;
-		let actions = {};
+
+		let switcher = new WorkspaceSwitcherPopup(this._workspaces);
+
+		if (!switcher.show(backwards, binding.get_name(), binding.get_mask())) {
+			switcher.destroy();
+		}
+	},
+
+	_startWindowSwitcher: function(display, screen, window, binding) {
+        let modifiers = binding.get_modifiers();
+        let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
+
 		let currentWorkspace = global.screen.get_active_workspace();
 		let currentIndex = 0;
 
-		if (binding.get_name() != "switch-windows") {
-			list = this._workspaces;
-			thumbnails = new WorkspacesThumbnailList(list);
-            actions["activate_selected"] = this._activateSelectedWorkspace;
-            actions["remove_selected"] = this._removeSelectedWorkspace;
-		} else {
-			list = this._windows.filter(function(win) {
-				return win.get_workspace() == currentWorkspace && !win.is_skip_taskbar();
-			});
+		let switcher = new WorkspaceWindowSwitcherPopup(this._windows);
 
-			if (list.length == 1 && list[0].get_workspace() == currentWorkspace && !list[0].is_hidden()) {
-				return;
-			}
-            
-            actions["activate_selected"] = this._activateSelectedWindow;
-            actions["remove_selected"] = this._removeSelectedWindow;
-
-			thumbnails = new AltTab.ThumbnailList(list);
-
-			if (!global.display.focus_window) {
-				currentIndex = -1;
-			}
-		}
-        
-		if (list.length) {
-			let switcher = new Switcher(list, thumbnails, actions);
-			switcher._currentIndex = currentIndex;
-
-			if (!switcher.show(backwards, binding.get_name(), binding.get_mask())) {
-				switcher.destroy();
-			}
+		if (!switcher.show(backwards, binding.get_name(), binding.get_mask())) {
+			switcher.destroy();
 		}
 	}
 })
@@ -516,24 +404,24 @@ const PowerAltTab = new Lang.Class({
     }, 
 
     enable: function() {
-        this.manager = new PowerAltTabManager();
-        this._setKeybindingsHandler(this.manager, this.manager._startWindowSwitcher);
+        this.manager = new MRUAltTabManager();
+        this._setKeybindingsHandler(this.manager, this.manager._startWorkspaceSwitcher, this.manager._startWindowSwitcher);
     },
 
     disable: function() {
         this.manager = null;
-        this._setKeybindingsHandler(Main.wm, Main.wm._startAppSwitcher);
+        this._setKeybindingsHandler(Main.wm, Main.wm._startAppSwitcher, Main.wm._startWindowSwitcher);
     },
         
-    _setKeybindingsHandler: function(handler, switcherStarter) {
+    _setKeybindingsHandler: function(handler, groupSwitcher, windowSwitcher) {
         Meta.keybindings_set_custom_handler('switch-windows',
-                                            Lang.bind(handler, switcherStarter));
+                                            Lang.bind(handler, windowSwitcher));
         Meta.keybindings_set_custom_handler('switch-group',
-                                            Lang.bind(handler, switcherStarter));
+                                            Lang.bind(handler, groupSwitcher));
         Meta.keybindings_set_custom_handler('switch-windows-backward',
-                                            Lang.bind(handler, switcherStarter));
+                                            Lang.bind(handler, windowSwitcher));
         Meta.keybindings_set_custom_handler('switch-group-backward',
-                                            Lang.bind(handler, switcherStarter));
+                                            Lang.bind(handler, groupSwitcher));
     }
 });
 
