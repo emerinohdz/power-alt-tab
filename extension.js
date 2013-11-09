@@ -193,7 +193,7 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
 	_select: function(index) {
 		this.parent(index);
 
-        thumbnailsFocused = (window != null);
+        let thumbnailsFocused = (window != null);
         this._switcherList.highlight(index, thumbnailsFocused);
 	},
 
@@ -218,13 +218,10 @@ const MRUAltTabManager = new Lang.Class({
     Name: 'MRUAltTabManager',
 
 	_init: function() {
-        let tracker = Shell.WindowTracker.get_default();
-        tracker.connect('notify::focus-app', Lang.bind(this, this._focusChanged));
-
+        // TODO: connect and track signals correctly
 		global.screen.connect("notify::n-workspaces", Lang.bind(this, this._changeWorkspaces));
         global.window_manager.connect('switch-workspace', Lang.bind(this, this._switchWorkspace));
 
-		this._windows = [];
 		this._workspaces = [];
 
 		this._changeWorkspaces();
@@ -235,16 +232,6 @@ const MRUAltTabManager = new Lang.Class({
 
 		for ( let i=0; i < global.screen.n_workspaces; ++i ) {
             let ws = global.screen.get_workspace_by_index(i);
-
-			if (ws._windowAddedId) {
-				ws.disconnect(ws._windowAddedId);
-				ws.disconnect(ws._windowRemovedId);
-			}
-
-            ws._windowAddedId = ws.connect('window-added',
-                                    Lang.bind(this, this._windowAdded));
-            ws._windowRemovedId = ws.connect('window-removed',
-                                    Lang.bind(this, this._windowRemoved));
 
 			workspaces.push(ws);
         }
@@ -280,66 +267,6 @@ const MRUAltTabManager = new Lang.Class({
 
 		this._workspaces.unshift(currentWorkspace);
 	},
-
-	_windowAdded: function(metaWorkspace, metaWindow) {
-		if (this._windows.indexOf(metaWindow) == -1) {
-			this._windows.splice(1, 0, metaWindow);
-		}
-    },
-
-    _windowRemoved: function(metaWorkspace, metaWindow) {
-		let windowIndex = this._windows.indexOf(metaWindow);
-
-		if (windowIndex != -1) {
-			this._windows.splice(windowIndex, 1);
-		}
-    },
-
-	_initWindowList: function() {
-		this._windows = [];
-
-		let windowActors = global.get_window_actors();
-
-		for (let i in windowActors) {
-			let win = windowActors[i].get_meta_window();
-
-			this._windows.push(win);
-		}
-
-		// Sort windows by user time
-		this._windows.sort(Lang.bind(this, this._sortWindows));
-	},
-
-	_focusChanged: function() {
-		if (!this._windows.length) {
-			this._initWindowList();
-		}
-
-		let focusedWindow = global.display.focus_window;
-
-		if (focusedWindow) {
-			let windowIndex = this._windows.indexOf(focusedWindow);
-
-			if (windowIndex != -1) {
-				// remove the window from the list first
-				this._windows.splice(windowIndex, 1);
-			} 		
-
-			// stack the window
-			this._windows.unshift(focusedWindow);
-		}
-	},
-
-    _sortWindows : function(win1, win2) {
-		let t1 = win1.get_user_time();
-		let t2 = win2.get_user_time();
-
-		if (t2 > t1) {
-			return 1;
-		} else {
-			return -1;
-		}
-    },
 
 	_startWorkspaceSwitcher: function(display, screen, window, binding) {
 		if (!this._workspaces.length) {
