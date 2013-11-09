@@ -380,20 +380,6 @@ const MRUAltTabManager = new Lang.Class({
 			switcher.destroy();
 		}
 	},
-
-	_startWindowSwitcher: function(display, screen, window, binding) {
-        let modifiers = binding.get_modifiers();
-        let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
-
-		let currentWorkspace = global.screen.get_active_workspace();
-		let currentIndex = 0;
-
-		let switcher = new WorkspaceWindowSwitcherPopup(this._windows);
-
-		if (!switcher.show(backwards, binding.get_name(), binding.get_mask())) {
-			switcher.destroy();
-		}
-	}
 })
 
 const PowerAltTab = new Lang.Class({
@@ -405,21 +391,21 @@ const PowerAltTab = new Lang.Class({
 
     enable: function() {
         this.manager = new MRUAltTabManager();
-        this._setKeybindingsHandler(this.manager, this.manager._startWorkspaceSwitcher, this.manager._startWindowSwitcher);
+        this._setKeybindingsHandler(this.manager, this.manager._startWorkspaceSwitcher);
     },
 
     disable: function() {
         this.manager = null;
-        this._setKeybindingsHandler(Main.wm, Main.wm._startAppSwitcher, Main.wm._startWindowSwitcher);
+        this._setKeybindingsHandler(Main.wm, Main.wm._startAppSwitcher);
     },
         
-    _setKeybindingsHandler: function(handler, groupSwitcher, windowSwitcher) {
+    _setKeybindingsHandler: function(handler, groupSwitcher) {
         Meta.keybindings_set_custom_handler('switch-windows',
-                                            Lang.bind(handler, windowSwitcher));
+                                            Lang.bind(Main.wm, Main.wm._startWindowSwitcher));
         Meta.keybindings_set_custom_handler('switch-group',
                                             Lang.bind(handler, groupSwitcher));
         Meta.keybindings_set_custom_handler('switch-windows-backward',
-                                            Lang.bind(handler, windowSwitcher));
+                                            Lang.bind(Main.wm, Main.wm._startWindowSwitcher));
         Meta.keybindings_set_custom_handler('switch-group-backward',
                                             Lang.bind(handler, groupSwitcher));
     }
