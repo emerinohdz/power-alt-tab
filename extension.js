@@ -209,31 +209,6 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
 
 })
 
-const WorkspaceWindowSwitcherPopup = new Lang.Class({
-	Name: "WorkspaceWindowSwitcherPopup",
-	Extends: AltTab.WindowSwitcherPopup,
-
-	_init: function(windows) {
-		this.parent();
-
-		this._windows = windows;
-	},
-
-	_getWindowList: function() {
-		let currentWorkspace = global.screen.get_active_workspace();
-
-		let list = this._windows.filter(function(win) {
-			return win.get_workspace() == currentWorkspace && !win.is_skip_taskbar();
-		});
-
-		if (list.length == 1 && list[0].get_workspace() == currentWorkspace && !list[0].is_hidden()) {
-			list = []; // disable
-		}
-
-		return list;
-	},
-
-})
 /**
  * This class handles window and workspace events, so we can keep a
  * stack of these two ordered by the most recently focused component.
