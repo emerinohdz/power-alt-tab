@@ -26,29 +26,29 @@ const SwitcherPopup = imports.ui.switcherPopup;
  * Minor modifications by @emerino (we don't like obscure code)
  */
 function connectAndTrack(owner, subject, name, cb) {
-    if (!owner.hasOwnProperty('_PowerAltTab_bound_signals')) {
-        owner._PowerAltTab_bound_signals = [];
-    }
+	if (!owner.hasOwnProperty('_PowerAltTab_bound_signals')) {
+		owner._PowerAltTab_bound_signals = [];
+	}
 
-    let id = subject.connect(name, cb);
-    owner._PowerAltTab_bound_signals.push([subject, id]);
+	let id = subject.connect(name, cb);
+	owner._PowerAltTab_bound_signals.push([subject, id]);
 }
 
 function disconnectTrackedSignals(owner) {
-    if (!owner || !owner._PowerAltTab_bound_signals) { 
-        return; 
-    }
+	if (!owner || !owner._PowerAltTab_bound_signals) { 
+		return; 
+	}
 
-    owner._PowerAltTab_bound_signals.forEach(
-        function (sig) {
-            let subject = sig[0];
-            let id = sig[1];
+	owner._PowerAltTab_bound_signals.forEach(
+		function (sig) {
+			let subject = sig[0];
+			let id = sig[1];
 
-            subject.disconnect(id);
-        }
-    );
+			subject.disconnect(id);
+		}
+	);
 
-    delete owner._PowerAltTab_bound_signals;
+	delete owner._PowerAltTab_bound_signals;
 }
 
 /**
@@ -59,39 +59,39 @@ function disconnectTrackedSignals(owner) {
  */
 
 const WorkspacesThumbnailList = new Lang.Class({
-    Name: 'WorkspaceThumbnailList',
-    Extends: SwitcherPopup.SwitcherList,
+	Name: 'WorkspaceThumbnailList',
+	Extends: SwitcherPopup.SwitcherList,
 
 	_init: function(workspaces) {
-        this.parent(true);
+		this.parent(true);
 
-        let activeWorkspace = global.screen.get_active_workspace();
-        let panelHeight = Main.panel.actor.height;
-        let monitor = Main.layoutManager.primaryMonitor;
+		let activeWorkspace = global.screen.get_active_workspace();
+		let panelHeight = Main.panel.actor.height;
+		let monitor = Main.layoutManager.primaryMonitor;
 
-        this._labels = new Array();
-        this._thumbnailBins = new Array();
-        this._clones = new Array();
-        this._workspaces = workspaces;
+		this._labels = new Array();
+		this._thumbnailBins = new Array();
+		this._clones = new Array();
+		this._workspaces = workspaces;
 		this._availHeight = 0;
 
-        this._porthole = {
-            x: monitor.x,
-            y: monitor.y + panelHeight,
-            width: monitor.width,
-            height: monitor.height - panelHeight
-        };
+		this._porthole = {
+			x: monitor.x,
+			y: monitor.y + panelHeight,
+			width: monitor.width,
+			height: monitor.height - panelHeight
+		};
 
-        for (let i = 0; i < workspaces.length; i++) {
-            let box = new St.BoxLayout({ style_class: 'thumbnail-box',
-                                         vertical: true });
+		for (let i = 0; i < workspaces.length; i++) {
+			let box = new St.BoxLayout({ style_class: 'thumbnail-box',
+										 vertical: true });
 
-            let bin = new St.Bin({ style_class: 'thumbnail' });
+			let bin = new St.Bin({ style_class: 'thumbnail' });
 
-            box.add_actor(bin);
-            this._thumbnailBins.push(bin);
+			box.add_actor(bin);
+			this._thumbnailBins.push(bin);
 
-            let title = workspaces[i].index() + 1;
+			let title = workspaces[i].index() + 1;
 			title = title.toString();
 
 			let name = new St.Label({ text: title });
@@ -103,16 +103,16 @@ const WorkspacesThumbnailList = new Lang.Class({
 
 			this.addItem(box, name);
 
-        }
+		}
 	},
 
 	// We need to scale the workspaces here
 	_allocate: function(actor, box, flags) {
-        // TODO: how do we do this properly using new syntax?
-//        AltTab.SwitcherList.prototype._allocate.call(this, actor, box, flags);
+		// TODO: how do we do this properly using new syntax?
+//		  AltTab.SwitcherList.prototype._allocate.call(this, actor, box, flags);
 		this.parent(actor, box, flags);
 
-        let panelHeight = Main.panel.actor.height;
+		let panelHeight = Main.panel.actor.height;
 		let scale = Math.min(1.0, 
 				AltTab.THUMBNAIL_DEFAULT_SIZE / this._porthole.width, 
 				this._availHeight / this._porthole.height);
@@ -130,39 +130,39 @@ const WorkspacesThumbnailList = new Lang.Class({
 		}
 	},
 
-    addClones : function (availHeight) {
-        if (!this._thumbnailBins.length)
-            return;
-        let totalPadding = this._items[0].get_theme_node().get_horizontal_padding() + this._items[0].get_theme_node().get_vertical_padding();
-        totalPadding += this.actor.get_theme_node().get_horizontal_padding() + this.actor.get_theme_node().get_vertical_padding();
-        let [labelMinHeight, labelNaturalHeight] = this._labels[0].get_preferred_height(-1);
-        let spacing = this._items[0].child.get_theme_node().get_length('spacing');
+	addClones : function (availHeight) {
+		if (!this._thumbnailBins.length)
+			return;
+		let totalPadding = this._items[0].get_theme_node().get_horizontal_padding() + this._items[0].get_theme_node().get_vertical_padding();
+		totalPadding += this.actor.get_theme_node().get_horizontal_padding() + this.actor.get_theme_node().get_vertical_padding();
+		let [labelMinHeight, labelNaturalHeight] = this._labels[0].get_preferred_height(-1);
+		let spacing = this._items[0].child.get_theme_node().get_length('spacing');
 
-        availHeight = Math.min(availHeight - labelNaturalHeight - totalPadding - spacing, AltTab.THUMBNAIL_DEFAULT_SIZE);
-        let binHeight = availHeight + this._items[0].get_theme_node().get_vertical_padding() + this.actor.get_theme_node().get_vertical_padding() - spacing;
-        binHeight = Math.min(AltTab.THUMBNAIL_DEFAULT_SIZE, binHeight);
+		availHeight = Math.min(availHeight - labelNaturalHeight - totalPadding - spacing, AltTab.THUMBNAIL_DEFAULT_SIZE);
+		let binHeight = availHeight + this._items[0].get_theme_node().get_vertical_padding() + this.actor.get_theme_node().get_vertical_padding() - spacing;
+		binHeight = Math.min(AltTab.THUMBNAIL_DEFAULT_SIZE, binHeight);
 
-        for (let i = 0; i < this._thumbnailBins.length; i++) {
-            let workspace = this._workspaces[i];
+		for (let i = 0; i < this._thumbnailBins.length; i++) {
+			let workspace = this._workspaces[i];
 
 			let clone = new WorkspaceThumbnail.WorkspaceThumbnail(workspace);
-            clone.setPorthole(this._porthole.x, this._porthole.y,
+			clone.setPorthole(this._porthole.x, this._porthole.y,
 							  this._porthole.width, this._porthole.height);
 
-            this._thumbnailBins[i].set_height(binHeight);
-            this._thumbnailBins[i].add_actor(clone.actor);
-            this._clones.push(clone.actor);
-        }
+			this._thumbnailBins[i].set_height(binHeight);
+			this._thumbnailBins[i].add_actor(clone.actor);
+			this._clones.push(clone.actor);
+		}
 
-        // Make sure we only do this once
-        this._thumbnailBins = new Array();
+		// Make sure we only do this once
+		this._thumbnailBins = new Array();
 		this._availHeight = availHeight;
-    }
+	}
 })
 
 const WorkspaceSwitcherPopup = new Lang.Class ({
-    Name: 'ThumbnailSwitcherPopup',
-    Extends: SwitcherPopup.SwitcherPopup,
+	Name: 'ThumbnailSwitcherPopup',
+	Extends: SwitcherPopup.SwitcherPopup,
 
 	_init: function(workspaces) {
 		this.parent();
@@ -170,7 +170,7 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
 		this._workspaces = workspaces;
 	},
 
-    _allocate: function (actor, box, flags) {
+	_allocate: function (actor, box, flags) {
 		this._thumbnails = this._switcherList;
 
 		if (this._thumbnails) {
@@ -192,43 +192,43 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
 			childBox.y2 = childBox.y1 + childNaturalHeight;
 			this._thumbnails.actor.allocate(childBox, flags);
 		}
-    },
+	},
 
-    _createSwitcher: function() {
+	_createSwitcher: function() {
 		this._switcherList = new WorkspacesThumbnailList(this._workspaces);
 		this._items = this._workspaces;
 
-        return true;
-    },
+		return true;
+	},
 
-    _keyPressHandler: function(keysym, backwards, action) {
-        if (keysym == Clutter.Escape) {
-            this.destroy();
-        } else if (keysym == Clutter.q || keysym == Clutter.Q) {
+	_keyPressHandler: function(keysym, backwards, action) {
+		if (keysym == Clutter.Escape) {
 			this.destroy();
-        } else if (action == Meta.KeyBindingAction.SWITCH_GROUP || action == Meta.KeyBindingAction.SWITCH_APPLICATIONS) {
+		} else if (keysym == Clutter.q || keysym == Clutter.Q) {
+			this.destroy();
+		} else if (action == Meta.KeyBindingAction.SWITCH_GROUP || action == Meta.KeyBindingAction.SWITCH_APPLICATIONS) {
 			!backwards ? this._select(this._next()) : this._select(this._previous());
-        } else if (action == Meta.KeyBindingAction.SWITCH_GROUP_BACKWARD || action == Meta.KeyBindingAction.SWITCH_APPLICATIONS_BACKWARD) {
+		} else if (action == Meta.KeyBindingAction.SWITCH_GROUP_BACKWARD || action == Meta.KeyBindingAction.SWITCH_APPLICATIONS_BACKWARD) {
 			this._select(this._previous());
-        } 
+		} 
 
-        return true;
-    },
+		return true;
+	},
 
-    _initialSelection: function(backward, binding) {
-        if (binding == 'switch-windows-backward' || backward)
-            this._select(this._items.length - 1);
-        else if (this._items.length == 1)
-            this._select(0);
-        else
-            this._select(1);
+	_initialSelection: function(backward, binding) {
+		if (binding == 'switch-windows-backward' || backward)
+			this._select(this._items.length - 1);
+		else if (this._items.length == 1)
+			this._select(0);
+		else
+			this._select(1);
 	},
 
 	_select: function(index) {
 		this.parent(index);
 
-        let thumbnailsFocused = (window != null);
-        this._switcherList.highlight(index, thumbnailsFocused);
+		let thumbnailsFocused = (window != null);
+		this._switcherList.highlight(index, thumbnailsFocused);
 	},
 
 	_finish: function(timestamp) {
@@ -249,18 +249,18 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
  *
  */
 const MRUAltTabManager = new Lang.Class({
-    Name: 'MRUAltTabManager',
+	Name: 'MRUAltTabManager',
 
 	_init: function(workspaces) {
-        if (!workspaces) {
-            this._workspaces = [];
-        }
+		if (!workspaces) {
+			this._workspaces = [];
+		}
 
-        connectAndTrack(this, global.screen, "notify::n-workspaces", 
-                Lang.bind(this, this._changeWorkspaces));
+		connectAndTrack(this, global.screen, "notify::n-workspaces", 
+				Lang.bind(this, this._changeWorkspaces));
 
-        connectAndTrack(this, global.window_manager, "switch-workspace", 
-                Lang.bind(this, this._switchWorkspace));
+		connectAndTrack(this, global.window_manager, "switch-workspace", 
+				Lang.bind(this, this._switchWorkspace));
 
 		this._changeWorkspaces();
 	}, 
@@ -269,10 +269,10 @@ const MRUAltTabManager = new Lang.Class({
 		let workspaces = [];
 
 		for ( let i=0; i < global.screen.n_workspaces; ++i ) {
-            let ws = global.screen.get_workspace_by_index(i);
+			let ws = global.screen.get_workspace_by_index(i);
 
 			workspaces.push(ws);
-        }
+		}
 
 		if (this._workspaces.length) {
 			let orderedWorkspaces = [];
@@ -311,8 +311,8 @@ const MRUAltTabManager = new Lang.Class({
 			this._changeWorkspaces();
 		}
 
-        let modifiers = binding.get_modifiers();
-        let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
+		let modifiers = binding.get_modifiers();
+		let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
 
 		let switcher = new WorkspaceSwitcherPopup(this._workspaces);
 
@@ -321,58 +321,58 @@ const MRUAltTabManager = new Lang.Class({
 		}
 	},
 
-    /**
-     * Disconnects tracked signals mainly.
-     */
-    destroy: function() {
-        disconnectTrackedSignals(this);   
-    }
+	/**
+	 * Disconnects tracked signals mainly.
+	 */
+	destroy: function() {
+		disconnectTrackedSignals(this);   
+	}
 })
 
 const PowerAltTab = new Lang.Class({
-    Name: "PowerAltTab",
+	Name: "PowerAltTab",
 
-    _init: function() {
-        // keep a single reference through the life of the session, so that
-        // we can mantain order betweek locks/unlocks (suspend/unsuspend).
-        // NOTE: this means that even if this extension is only installed
-        // but not enabled it will be mantaining a list of workspaces and
-        // updating it throught the life of the session.
-        this.manager = new MRUAltTabManager();
-    }, 
+	_init: function() {
+		// keep a single reference through the life of the session, so that
+		// we can mantain order betweek locks/unlocks (suspend/unsuspend).
+		// NOTE: this means that even if this extension is only installed
+		// but not enabled it will be mantaining a list of workspaces and
+		// updating it throught the life of the session.
+		this.manager = new MRUAltTabManager();
+	}, 
 
-    enable: function() {
-        this._setKeybindingsHandler(this.manager, this.manager._startWorkspaceSwitcher);
-    },
+	enable: function() {
+		this._setKeybindingsHandler(this.manager, this.manager._startWorkspaceSwitcher);
+	},
 
-    disable: function() {
-        this._setKeybindingsHandler(Main.wm, Main.wm._startAppSwitcher);
-    },
-        
-    _setKeybindingsHandler: function(handler, groupSwitcher) {
-        //Meta.keybindings_set_custom_handler('switch-windows',
-        //Lang.bind(Main.wm, Main.wm._startWindowSwitcher));
+	disable: function() {
+		this._setKeybindingsHandler(Main.wm, Main.wm._startAppSwitcher);
+	},
+		
+	_setKeybindingsHandler: function(handler, groupSwitcher) {
+		//Meta.keybindings_set_custom_handler('switch-windows',
+		//Lang.bind(Main.wm, Main.wm._startWindowSwitcher));
 
-        Meta.keybindings_set_custom_handler('switch-group',
-                                            Lang.bind(handler, groupSwitcher));
-        //Meta.keybindings_set_custom_handler('switch-windows-backward',
-        //Lang.bind(Main.wm, Main.wm._startWindowSwitcher));
+		Meta.keybindings_set_custom_handler('switch-group',
+											Lang.bind(handler, groupSwitcher));
+		//Meta.keybindings_set_custom_handler('switch-windows-backward',
+		//Lang.bind(Main.wm, Main.wm._startWindowSwitcher));
 
-        Meta.keybindings_set_custom_handler('switch-group-backward',
-                                            Lang.bind(handler, groupSwitcher));
-    }
+		Meta.keybindings_set_custom_handler('switch-group-backward',
+											Lang.bind(handler, groupSwitcher));
+	}
 });
 
 let powerAltTab = null;
 
 function init() {
-    powerAltTab = new PowerAltTab();
+	powerAltTab = new PowerAltTab();
 }
 
 function enable() {
-    powerAltTab.enable();
+	powerAltTab.enable();
 }
 
 function disable() {
-    powerAltTab.disable();
+	powerAltTab.disable();
 }
