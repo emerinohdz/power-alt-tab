@@ -17,6 +17,40 @@ const AltTab = imports.ui.altTab;
 const WorkspaceThumbnail = imports.ui.workspaceThumbnail;
 const SwitcherPopup = imports.ui.switcherPopup;
 
+/** Utility functions **/
+/* Note : credit to the shellshape extension, from which these functions
+ * are modified. https://extensions.gnome.org/extension/294/shellshape/
+ * Signals are stored by the owner, storing both the target &
+ * the id to clean up later.
+ * 
+ * Minor modifications by @emerino (we don't like obscure code)
+ */
+function connectAndTrack(owner, subject, name, cb) {
+    if (!owner.hasOwnProperty('_PowerAltTab_bound_signals')) {
+        owner._PowerAltTab_bound_signals = [];
+    }
+
+    let id = subject.connect(name, cb);
+    owner._PowerAltTab_bound_signals.push([subject, id]);
+}
+
+function disconnectTrackedSignals(owner) {
+    if (!owner || !owner._PowerAltTab_bound_signals) { 
+        return; 
+    }
+
+    owner._PowerAltTab_bound_signals.forEach(
+        function (sig) {
+            let subject = sig[0];
+            let id = sig[1];
+
+            subject.disconnect(id);
+        }
+    );
+
+    delete owner._PowerAltTab_bound_signals;
+}
+
 /**
  * NOTE: It may not be safe to extend AltTab.SwitcherList because it doesn't 
  * disconnects signals properly, however it'll only be a problem when
@@ -217,12 +251,16 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
 const MRUAltTabManager = new Lang.Class({
     Name: 'MRUAltTabManager',
 
-	_init: function() {
-        // TODO: connect and track signals correctly
-        global.screen.connect("notify::n-workspaces", Lang.bind(this, this._changeWorkspaces));
-        global.window_manager.connect('switch-workspace', Lang.bind(this, this._switchWorkspace));
+	_init: function(workspaces) {
+        if (!workspaces) {
+            this._workspaces = [];
+        }
 
-		this._workspaces = [];
+        connectAndTrack(this, global.screen, "notify::n-workspaces", 
+                Lang.bind(this, this._changeWorkspaces));
+
+        connectAndTrack(this, global.window_manager, "switch-workspace", 
+                Lang.bind(this, this._switchWorkspace));
 
 		this._changeWorkspaces();
 	}, 
@@ -282,32 +320,44 @@ const MRUAltTabManager = new Lang.Class({
 			switcher.destroy();
 		}
 	},
+
+    /**
+     * Disconnects tracked signals mainly.
+     */
+    destroy: function() {
+        disconnectTrackedSignals(this);   
+    }
 })
 
 const PowerAltTab = new Lang.Class({
     Name: "PowerAltTab",
 
     _init: function() {
-        this.manager = null;
+        // keep a single reference through the life of the session, so that
+        // we can mantain order betweek locks/unlocks (suspend/unsuspend).
+        // NOTE: this means that even if this extension is only installed
+        // but not enabled it will be mantaining a list of workspaces and
+        // updating it throught the life of the session.
+        this.manager = new MRUAltTabManager();
     }, 
 
     enable: function() {
-        this.manager = new MRUAltTabManager();
         this._setKeybindingsHandler(this.manager, this.manager._startWorkspaceSwitcher);
     },
 
     disable: function() {
-        this.manager = null;
         this._setKeybindingsHandler(Main.wm, Main.wm._startAppSwitcher);
     },
         
     _setKeybindingsHandler: function(handler, groupSwitcher) {
-        Meta.keybindings_set_custom_handler('switch-windows',
-                                            Lang.bind(Main.wm, Main.wm._startWindowSwitcher));
+        //Meta.keybindings_set_custom_handler('switch-windows',
+        //Lang.bind(Main.wm, Main.wm._startWindowSwitcher));
+
         Meta.keybindings_set_custom_handler('switch-group',
                                             Lang.bind(handler, groupSwitcher));
-        Meta.keybindings_set_custom_handler('switch-windows-backward',
-                                            Lang.bind(Main.wm, Main.wm._startWindowSwitcher));
+        //Meta.keybindings_set_custom_handler('switch-windows-backward',
+        //Lang.bind(Main.wm, Main.wm._startWindowSwitcher));
+
         Meta.keybindings_set_custom_handler('switch-group-backward',
                                             Lang.bind(handler, groupSwitcher));
     }
