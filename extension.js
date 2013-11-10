@@ -219,7 +219,7 @@ const MRUAltTabManager = new Lang.Class({
 
 	_init: function() {
         // TODO: connect and track signals correctly
-		global.screen.connect("notify::n-workspaces", Lang.bind(this, this._changeWorkspaces));
+        global.screen.connect("notify::n-workspaces", Lang.bind(this, this._changeWorkspaces));
         global.window_manager.connect('switch-workspace', Lang.bind(this, this._switchWorkspace));
 
 		this._workspaces = [];
