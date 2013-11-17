@@ -17,39 +17,10 @@ const AltTab = imports.ui.altTab;
 const WorkspaceThumbnail = imports.ui.workspaceThumbnail;
 const SwitcherPopup = imports.ui.switcherPopup;
 
+const ExtensionUtils = imports.misc.extensionUtils;
+const Utils = ExtensionUtils.getCurrentExtension().imports.utils;
+
 /** Utility functions **/
-/* Note : credit to the shellshape extension, from which these functions
- * are modified. https://extensions.gnome.org/extension/294/shellshape/
- * Signals are stored by the owner, storing both the target &
- * the id to clean up later.
- * 
- * Minor modifications by @emerino (we don't like obscure code)
- */
-function connectAndTrack(owner, subject, name, cb) {
-    if (!owner.hasOwnProperty('_PowerAltTab_bound_signals')) {
-        owner._PowerAltTab_bound_signals = [];
-    }
-
-    let id = subject.connect(name, cb);
-    owner._PowerAltTab_bound_signals.push([subject, id]);
-}
-
-function disconnectTrackedSignals(owner) {
-    if (!owner || !owner._PowerAltTab_bound_signals) { 
-        return; 
-    }
-
-    owner._PowerAltTab_bound_signals.forEach(
-        function (sig) {
-            let subject = sig[0];
-            let id = sig[1];
-
-            subject.disconnect(id);
-        }
-    );
-
-    delete owner._PowerAltTab_bound_signals;
-}
 
 /**
  * NOTE: It may not be safe to extend AltTab.SwitcherList because it doesn't 
@@ -256,10 +227,10 @@ const MRUAltTabManager = new Lang.Class({
             this._workspaces = [];
         }
 
-        connectAndTrack(this, global.screen, "notify::n-workspaces", 
+        Utils.connectAndTrack(this, global.screen, "notify::n-workspaces", 
                 Lang.bind(this, this._changeWorkspaces));
 
-        connectAndTrack(this, global.window_manager, "switch-workspace", 
+        Utils.connectAndTrack(this, global.window_manager, "switch-workspace", 
                 Lang.bind(this, this._switchWorkspace));
 
         this._changeWorkspaces();
@@ -325,7 +296,7 @@ const MRUAltTabManager = new Lang.Class({
      * Disconnects tracked signals mainly.
      */
     destroy: function() {
-        disconnectTrackedSignals(this);   
+        Utils.disconnectTrackedSignals(this);   
     }
 })
 
