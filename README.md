@@ -13,14 +13,14 @@ This is useful when you have lots of workspaces available, with specific windows
 
 # Installation
 
+*You need to have NodeJS (npm) for all of the following to work:*
+
 First step is to download source code and build dependencies:
 
     git clone git@github.com:emerinohdz/PowerAltTab.git && cd PowerAltTab
     npm install
 
 There are two ways to install from sources:
-
-*You need to have NodeJS (npm) for all of the following to work:*
 
 * Install directly to ~/.local/share/gnome-shell/extensions
 
