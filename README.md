@@ -1,5 +1,4 @@
-Power Alt-Tab
-Author: Edgar Merino <donvodka at gmail dot com>
+# Power Alt-Tab
 
 Gnome-Shell extension that replaces predefined Alt-Tab behaviour.
 
@@ -12,11 +11,20 @@ When iterating over windows/workspaces, a list of thumbnails for each is display
 
 This is useful when you have lots of workspaces available, with specific windows on each, so navigating through all your windows is much easier. The idea was taken from the Xmonad contrib module that does the same thing (iterates over workspaces using alt-tab).
 
+# Installation
 
-Installation instructions:
-
-You need to have NodeJS (npm) for this to work:
-
+*First step is to download source code and download build dependencies:*
     git clone git@github.com:emerinohdz/PowerAltTab.git && cd PowerAltTab
-    npm install && gulp install
+    npm install
 
+*You need to have NodeJS (npm) for all the following to work:*
+
+## Install directly to ~/.local/share/gnome-shell/extensions
+    node_modules/.bin/gulp install
+
+## Create ZIP file in dist/ for installation through Gnome Tweak Tool
+    node_modules/.bin/gulp dist
+
+# Author
+
+[Edgar Merino](https://github.com/emerinohdz) (emerino at nuevebit dot com)
