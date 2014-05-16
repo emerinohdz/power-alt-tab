@@ -15,5 +15,8 @@ This is useful when you have lots of workspaces available, with specific windows
 
 Installation instructions:
 
-git clone git@github.com:emerinohdz/PowerAltTab.git ~/.local/share/gnome-shell/extensions/PowerAltTab@devpower.org
+You need to have NodeJS (npm) for this to work:
+
+    git clone git@github.com:emerinohdz/PowerAltTab.git && cd PowerAltTab
+    npm install && gulp install
 
