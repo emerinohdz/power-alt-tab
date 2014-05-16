@@ -209,7 +209,7 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
     },
 
     _activateSelected: function(workspace, timestamp) {
-        workspace.activate(timestamp);
+        workspace.activate(0);
     },
 
 })
