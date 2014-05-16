@@ -1,0 +1,11 @@
+{
+  "name": "power-alt-tab",
+  "description": "Iterate over recent workspaces using Alt+Tab",
+  "version": "1.0.0",
+  "devDependencies": {
+    "gulp": "^3.6.0",
+    "gulp-clean": "^0.2.4",
+    "gulp-util": "^2.2.14",
+    "gulp-zip": "^0.3.4"
+  }
+}
