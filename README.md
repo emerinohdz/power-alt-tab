@@ -13,16 +13,21 @@ This is useful when you have lots of workspaces available, with specific windows
 
 # Installation
 
-*First step is to download source code and download build dependencies:*
+First step is to download source code and build dependencies:
+
     git clone git@github.com:emerinohdz/PowerAltTab.git && cd PowerAltTab
     npm install
 
-*You need to have NodeJS (npm) for all the following to work:*
+There are two ways to install from sources:
 
-## Install directly to ~/.local/share/gnome-shell/extensions
+*You need to have NodeJS (npm) for all of the following to work:*
+
+* Install directly to ~/.local/share/gnome-shell/extensions
+
     node_modules/.bin/gulp install
 
-## Create ZIP file in dist/ for installation through Gnome Tweak Tool
+* Create ZIP file in dist/ for installation through Gnome Tweak Tool
+
     node_modules/.bin/gulp dist
 
 # Author
