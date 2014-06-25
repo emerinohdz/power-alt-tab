@@ -1,15 +1,21 @@
 # Power Alt-Tab
 
-Gnome-Shell extension that replaces predefined Alt-Tab behaviour.
+Gnome-Shell extension that provides an MRU Workspace Switcher. The switcher
+is bound to the "switch_group" event, which means that you need to assign
+a keybinding for this under gnome settings.
 
-Replacing means two things:
+When iterating over workspaces, a list of thumbnails for each is displayed 
+on the screen.
 
-1) The binding for "switch_group" now iterates over the available workspaces, ordered by most recently used.
-2) The binding for "switch_windows" now iterates over the windows in the current workspace, ordered by most recently used (old alt-tab behaviour). Additionally, it allows to close the selected window in the pager by typing the "q" key.
+This is useful when you have lots of workspaces available, with specific 
+windows on each, so navigating through all your windows is much easier. 
+The idea was taken from the Xmonad contrib module that does the same thing 
+(iterates over workspaces using alt-tab: http://xmonad.org/xmonad-docs/xmonad-contrib/XMonad-Actions-CycleWS.html).
 
-When iterating over windows/workspaces, a list of thumbnails for each is displayed on the screen.
-
-This is useful when you have lots of workspaces available, with specific windows on each, so navigating through all your windows is much easier. The idea was taken from the Xmonad contrib module that does the same thing (iterates over workspaces using alt-tab).
+It is named Power Alt Tab because it was made back in gs 3.2, when there
+was no MRU Window Switcher available (only App Switcher), this extension
+used to replace the app switcher with a window switcher, but over the time
+gs added its own window switcher so we only support the MRU WS switcher now.
 
 # Installation
 
