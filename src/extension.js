@@ -136,9 +136,11 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
     Extends: SwitcherPopup.SwitcherPopup,
 
     _init: function(workspaces) {
-        this.parent();
+        this.parent(workspaces);
 
         this._workspaces = workspaces;
+        this._switcherList = new WorkspacesThumbnailList(this._workspaces);
+        //this._items = this._workspaces;
     },
 
     _allocate: function (actor, box, flags) {
@@ -165,25 +167,18 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
         }
     },
 
-    _createSwitcher: function() {
-        this._switcherList = new WorkspacesThumbnailList(this._workspaces);
-        this._items = this._workspaces;
-
-        return true;
-    },
-
-    _keyPressHandler: function(keysym, backwards, action) {
+    _keyPressHandler: function(keysym, action) {
         if (keysym == Clutter.Escape) {
             this.destroy();
         } else if (keysym == Clutter.q || keysym == Clutter.Q) {
             this.destroy();
         } else if (action == Meta.KeyBindingAction.SWITCH_GROUP || action == Meta.KeyBindingAction.SWITCH_APPLICATIONS) {
-            !backwards ? this._select(this._next()) : this._select(this._previous());
+            this._select(this._next());
         } else if (action == Meta.KeyBindingAction.SWITCH_GROUP_BACKWARD || action == Meta.KeyBindingAction.SWITCH_APPLICATIONS_BACKWARD) {
             this._select(this._previous());
         } 
 
-        return true;
+        return Clutter.EVENT_STOP;
     },
 
     _initialSelection: function(backward, binding) {
