@@ -79,8 +79,6 @@ const WorkspacesThumbnailList = new Lang.Class({
 
     // We need to scale the workspaces here
     _allocate: function(actor, box, flags) {
-        // TODO: how do we do this properly using new syntax?
-//        AltTab.SwitcherList.prototype._allocate.call(this, actor, box, flags);
         this.parent(actor, box, flags);
 
         let panelHeight = Main.panel.actor.height;
@@ -140,31 +138,39 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
 
         this._workspaces = workspaces;
         this._switcherList = new WorkspacesThumbnailList(this._workspaces);
-        //this._items = this._workspaces;
+        this._activateTimeout = 0;
+        this._allocateTimeout = 0;
     },
 
     _allocate: function (actor, box, flags) {
         this._thumbnails = this._switcherList;
 
-        if (this._thumbnails) {
-            let childBox = new Clutter.ActorBox();
-            let primary = Main.layoutManager.primaryMonitor;
+        // we delay allocation (and creation) of WS clones, because it degrades
+        // performance when trying to "fast-switch" between workspaces, the 
+        // delay is set to the constant SwitcherPopup.POPUP_DELAY_TIMEOUT
+        this._allocateTimeout = Mainloop.timeout_add(SwitcherPopup.POPUP_DELAY_TIMEOUT, Lang.bind(this, function() {
+            if (this._thumbnails) {
+                let childBox = new Clutter.ActorBox();
+                let primary = Main.layoutManager.primaryMonitor;
 
-            let leftPadding = this.actor.get_theme_node().get_padding(St.Side.LEFT);
-            let rightPadding = this.actor.get_theme_node().get_padding(St.Side.RIGHT);
-            let bottomPadding = this.actor.get_theme_node().get_padding(St.Side.BOTTOM);
-            let vPadding = this.actor.get_theme_node().get_vertical_padding();
-            let hPadding = leftPadding + rightPadding;
+                let leftPadding = this.actor.get_theme_node().get_padding(St.Side.LEFT);
+                let rightPadding = this.actor.get_theme_node().get_padding(St.Side.RIGHT);
+                let bottomPadding = this.actor.get_theme_node().get_padding(St.Side.BOTTOM);
+                let vPadding = this.actor.get_theme_node().get_vertical_padding();
+                let hPadding = leftPadding + rightPadding;
 
-            let [childMinHeight, childNaturalHeight] = this._thumbnails.actor.get_preferred_height(primary.width - hPadding);
-            let [childMinWidth, childNaturalWidth] = this._thumbnails.actor.get_preferred_width(childNaturalHeight);
-            childBox.x1 = Math.max(primary.x + leftPadding, primary.x + Math.floor((primary.width - childNaturalWidth) / 2));
-            childBox.x2 = Math.min(primary.x + primary.width - rightPadding, childBox.x1 + childNaturalWidth);
-            childBox.y1 = primary.y + Math.floor((primary.height - childNaturalHeight) / 2);
-            this._thumbnails.addClones(primary.height);
-            childBox.y2 = childBox.y1 + childNaturalHeight;
-            this._thumbnails.actor.allocate(childBox, flags);
-        }
+                let [childMinHeight, childNaturalHeight] = this._thumbnails.actor.get_preferred_height(primary.width - hPadding);
+                let [childMinWidth, childNaturalWidth] = this._thumbnails.actor.get_preferred_width(childNaturalHeight);
+                childBox.x1 = Math.max(primary.x + leftPadding, primary.x + Math.floor((primary.width - childNaturalWidth) / 2));
+                childBox.x2 = Math.min(primary.x + primary.width - rightPadding, childBox.x1 + childNaturalWidth);
+                childBox.y1 = primary.y + Math.floor((primary.height - childNaturalHeight) / 2);
+                this._thumbnails.addClones(primary.height);
+                childBox.y2 = childBox.y1 + childNaturalHeight;
+                this._thumbnails.actor.allocate(childBox, flags);
+            }
+
+            this._allocateTimeout = 0;
+        }));
     },
 
     _keyPressHandler: function(keysym, action) {
@@ -198,16 +204,40 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
     },
 
     _finish: function(timestamp) {
-        this._activateSelected(this._items[this._selectedIndex], timestamp);
+        // this happens when fast-switching between workspaces, we
+        // should cancel the delayed allocation to improve performance
+        if (this._allocateTimeout) {
+            Mainloop.source_remove(this._allocateTimeout);
+            this._allocateTimeout = 0;
+        }
 
+        // is this the right way to handle this? if we don't delay it
+        // metacity will complain because the timestamp passed by SwitcherPopup
+        // is actually the current time
+        this._activateTimeout = Mainloop.timeout_add(10, Lang.bind(this, function() {
+            this._activateSelected(this._items[this._selectedIndex], timestamp);
+            this._activateTimeout = 0;
+        }));
+
+        this.parent(timestamp);
+    },
+
+    _onDestroy: function() {
         this.parent();
+
+        if (this._activateTimeout) {
+            Mainloop.source_remove(this._activateTimeout);
+        }
+        if (this._allocateTimeout) {
+            Mainloop.source_remove(this._allocateTimeout);
+        }
     },
 
     _activateSelected: function(workspace, timestamp) {
-        workspace.activate(0);
+        workspace.activate(timestamp);
     },
 
-})
+});
 
 /**
  * This class handles window and workspace events, so we can keep a
@@ -293,7 +323,7 @@ const MRUAltTabManager = new Lang.Class({
     destroy: function() {
         Utils.disconnectTrackedSignals(this);   
     }
-})
+});
 
 const PowerAltTab = new Lang.Class({
     Name: "PowerAltTab",
