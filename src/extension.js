@@ -204,6 +204,8 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
     },
 
     _finish: function(timestamp) {
+        this.parent(timestamp);
+
         // this happens when fast-switching between workspaces, we
         // should cancel the delayed allocation to improve performance
         if (this._allocateTimeout) {
@@ -214,12 +216,13 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
         // is this the right way to handle this? if we don't delay it
         // metacity will complain because the timestamp passed by SwitcherPopup
         // is actually the current time
+        /*
         this._activateTimeout = Mainloop.timeout_add(10, Lang.bind(this, function() {
             this._activateSelected(this._items[this._selectedIndex], timestamp);
             this._activateTimeout = 0;
         }));
-
-        this.parent(timestamp);
+        */
+        this._activateSelected(this._items[this._selectedIndex], timestamp);
     },
 
     _onDestroy: function() {
