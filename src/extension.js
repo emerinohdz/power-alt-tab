@@ -40,9 +40,9 @@ const WorkspacesThumbnailList = new Lang.Class({
         let panelHeight = Main.panel.actor.height;
         let monitor = Main.layoutManager.primaryMonitor;
 
-        this._labels = new Array();
-        this._thumbnailBins = new Array();
-        this._clones = new Array();
+        this._labels = [];
+        this._thumbnailBins = [];
+        this._clones = [];
         this._workspaces = workspaces;
         this._availHeight = 0;
 
@@ -124,13 +124,13 @@ const WorkspacesThumbnailList = new Lang.Class({
         }
 
         // Make sure we only do this once
-        this._thumbnailBins = new Array();
+        this._thumbnailBins = [];
         this._availHeight = availHeight;
     }
 })
 
 const WorkspaceSwitcherPopup = new Lang.Class ({
-    Name: 'ThumbnailSwitcherPopup',
+    Name: 'WorkspaceSwitcherPopup',
     Extends: SwitcherPopup.SwitcherPopup,
 
     _init: function(workspaces) {
@@ -139,40 +139,15 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
         this._workspaces = workspaces;
         this._switcherList = new WorkspacesThumbnailList(this._workspaces);
         this._activateTimeout = 0;
-        this._allocateTimeout = 0;
     },
 
     _allocate: function (actor, box, flags) {
-        this._thumbnails = this._switcherList;
+        this.parent(actor, box, flags);
+        // add thumbnail clones to popup
+        let primary = Main.layoutManager.primaryMonitor;
+        this._switcherList.addClones(primary.height);
 
-        // we delay allocation (and creation) of WS clones, because it degrades
-        // performance when trying to "fast-switch" between workspaces, the 
-        // delay is set to the constant SwitcherPopup.POPUP_DELAY_TIMEOUT
-        this._allocateTimeout = Mainloop.timeout_add(SwitcherPopup.POPUP_DELAY_TIMEOUT, Lang.bind(this, function() {
-            if (this._thumbnails) {
-                let childBox = new Clutter.ActorBox();
-                let primary = Main.layoutManager.primaryMonitor;
-
-                let leftPadding = this.actor.get_theme_node().get_padding(St.Side.LEFT);
-                let rightPadding = this.actor.get_theme_node().get_padding(St.Side.RIGHT);
-                let bottomPadding = this.actor.get_theme_node().get_padding(St.Side.BOTTOM);
-                let vPadding = this.actor.get_theme_node().get_vertical_padding();
-                let hPadding = leftPadding + rightPadding;
-
-                let [childMinHeight, childNaturalHeight] = this._thumbnails.actor.get_preferred_height(primary.width - hPadding);
-                let [childMinWidth, childNaturalWidth] = this._thumbnails.actor.get_preferred_width(childNaturalHeight);
-                childBox.x1 = Math.max(primary.x + leftPadding, primary.x + Math.floor((primary.width - childNaturalWidth) / 2));
-                childBox.x2 = Math.min(primary.x + primary.width - rightPadding, childBox.x1 + childNaturalWidth);
-                childBox.y1 = primary.y + Math.floor((primary.height - childNaturalHeight) / 2);
-                this._thumbnails.addClones(primary.height);
-                childBox.y2 = childBox.y1 + childNaturalHeight;
-                this._thumbnails.actor.allocate(childBox, flags);
-            }
-
-            this._allocateTimeout = 0;
-        }));
     },
-
     _keyPressHandler: function(keysym, action) {
         if (keysym == Clutter.Escape) {
             this.destroy();
@@ -206,13 +181,6 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
     _finish: function(timestamp) {
         this.parent(timestamp);
 
-        // this happens when fast-switching between workspaces, we
-        // should cancel the delayed allocation to improve performance
-        if (this._allocateTimeout) {
-            Mainloop.source_remove(this._allocateTimeout);
-            this._allocateTimeout = 0;
-        }
-
         // is this the right way to handle this? if we don't delay it
         // metacity will complain because the timestamp passed by SwitcherPopup
         // is actually the current time
@@ -230,9 +198,6 @@ const WorkspaceSwitcherPopup = new Lang.Class ({
 
         if (this._activateTimeout) {
             Mainloop.source_remove(this._activateTimeout);
-        }
-        if (this._allocateTimeout) {
-            Mainloop.source_remove(this._allocateTimeout);
         }
     },
 
