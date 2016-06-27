@@ -1,5 +1,5 @@
 {
-	"shell-version": ["3.14", "3.16", "3.18"], 
+	"shell-version": ["3.14", "3.16", "3.18", "3.20"], 
 	"uuid": "PowerAltTab@devpower.org", 
 	"name": "Power Alt-Tab", 
 	"description": "Replace alt tab behavior, iterate over available workspaces and windows (view README for more information)",
