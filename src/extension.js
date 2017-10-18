@@ -310,7 +310,7 @@ const PowerAltTab = new Lang.Class({
     },
 
     disable: function() {
-        this._setKeybindingsHandler(Main.wm, Main.wm._startAppSwitcher);
+        this._setKeybindingsHandler(Main.wm, Main.wm._startSwitcher);
     },
         
     _setKeybindingsHandler: function(handler, groupSwitcher) {
