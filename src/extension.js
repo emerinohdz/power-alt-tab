@@ -24,7 +24,7 @@ const Utils = ExtensionUtils.getCurrentExtension().imports.utils;
 
 /**
  * NOTE: It may not be safe to extend AltTab.SwitcherList because it doesn't 
- * disconnects signals properly, however it'll only be a problem when
+ * disconnect signals properly, however it'll only be a problem when
  * enabling/disabling the extension constantly on the same gnome-shell
  * instance.
  */
