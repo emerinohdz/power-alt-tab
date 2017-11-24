@@ -11,6 +11,9 @@ var path = require('path');
 var zip = require('gulp-zip');
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
+var argv = require("yargs").argv; // cmd arguments support
+
+var KarmaServer = require('karma').Server;
 
 // gulp plugins
 var gulp = require("gulp");
@@ -23,7 +26,9 @@ var metadata = JSON.parse(fs.readFileSync("metadata.json"));
 var config = {
     srcDir: path.join(__dirname, "src"),
     distDir: path.join(__dirname, "dist"),
-    installDir: path.join(process.env.HOME, ".local/share/gnome-shell/extensions/" + metadata.uuid)
+    installDir: path.join(process.env.HOME, ".local/share/gnome-shell/extensions/" + metadata.uuid),
+    singleRun: argv.single || false,
+    browser: argv.browser || "Firefox"
 };
 
 var enableExtension = function(enable, cb) {
@@ -34,6 +39,29 @@ var enableExtension = function(enable, cb) {
             });
 };
 
+/**
+ * Test tasks. Uses KARMA runner.
+ */
+gulp.task('test', function (done) {
+    // Be sure to return the stream 
+    var server = new KarmaServer({
+        configFile: __dirname + '/test/karma.conf.js',
+        singleRun: config.singleRun,
+        browsers: [config.browser]
+    }, function (exitCode) {
+        if (exitCode) {
+            process.exit(exitCode);
+        } else {
+            done();
+        }
+    });
+
+    server.on('run_complete', function (browsers, results) {
+        //done((results.error) ? results.error : null);
+    });
+
+    server.start();
+});
 
 /**
  * Clean dist dir

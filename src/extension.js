@@ -216,20 +216,12 @@ const MRUAltTabManager = new Lang.Class({
     Name: 'MRUAltTabManager',
 
     _init: function (workspaces) {
-        if (!workspaces) {
-            this._workspaces = [];
-        }
+        this._workspaces = workspaces || [];
 
-        Utils.connectAndTrack(this, global.screen, "notify::n-workspaces",
-                Lang.bind(this, this._changeWorkspaces));
-
-        Utils.connectAndTrack(this, global.window_manager, "switch-workspace",
-                Lang.bind(this, this._switchWorkspace));
-
-        this._changeWorkspaces();
+        //this.changeWorkspaces();
     },
 
-    _changeWorkspaces: function () {
+    changeWorkspaces: function () {
         let workspaces = [];
 
         for (let i = 0; i < global.screen.n_workspaces; ++i) {
@@ -259,7 +251,7 @@ const MRUAltTabManager = new Lang.Class({
         this._workspaces = workspaces;
     },
 
-    _switchWorkspace: function () {
+    switchWorkspace: function () {
         let currentWorkspace = global.screen.get_active_workspace();
         let workspaceIndex = this._workspaces.indexOf(currentWorkspace);
 
@@ -272,7 +264,7 @@ const MRUAltTabManager = new Lang.Class({
 
     _startWorkspaceSwitcher: function (display, screen, window, binding) {
         if (!this._workspaces.length) {
-            this._changeWorkspaces();
+            this.changeWorkspaces();
         }
 
         let modifiers = binding.get_modifiers();
@@ -298,7 +290,7 @@ const PowerAltTab = new Lang.Class({
 
     _init: function () {
         // keep a single reference through the life of the session, so that
-        // we can mantain order betweek locks/unlocks (suspend/unsuspend).
+        // we can mantain order between locks/unlocks (suspend/unsuspend).
         // NOTE: this means that even if this extension is only installed
         // but not enabled it will be mantaining a list of workspaces and
         // updating it throught the life of the session.
@@ -306,25 +298,37 @@ const PowerAltTab = new Lang.Class({
     },
 
     enable: function () {
-        this._setKeybindingsHandler(this.manager, this.manager._startWorkspaceSwitcher);
+        Utils.connectAndTrack(this, global.screen, "notify::n-workspaces",
+                Lang.bind(this.manager, this.manager.changeWorkspaces));
+
+        Utils.connectAndTrack(this, global.window_manager, "switch-workspace",
+                Lang.bind(this.manager, this.manager.switchWorkspace));
+
+        // init workspaces
+        this.manager.changeWorkspaces();
+
+        this._setKeybindingsHandler(
+                this.manager,
+                this.manager._startWorkspaceSwitcher);
     },
 
     disable: function () {
+        Utils.disconnectTrackedSignals(this);
+
         var switcher = (typeof Main.wm.__startSwitcher !== "undefined")
                 ? Main.wm.__startSwitcher
                 : Main.wm.__startAppSwitcher; // support GS < 3.26
-        
+
+        if (!switcher) {
+            switcher = Main.wm._startSwitcher;
+        }
+
         this._setKeybindingsHandler(Main.wm, switcher);
     },
 
     _setKeybindingsHandler: function (handler, groupSwitcher) {
-        //Meta.keybindings_set_custom_handler('switch-windows',
-        //Lang.bind(Main.wm, Main.wm._startWindowSwitcher));
-
         Meta.keybindings_set_custom_handler('switch-group',
                 Lang.bind(handler, groupSwitcher));
-        //Meta.keybindings_set_custom_handler('switch-windows-backward',
-        //Lang.bind(Main.wm, Main.wm._startWindowSwitcher));
 
         Meta.keybindings_set_custom_handler('switch-group-backward',
                 Lang.bind(handler, groupSwitcher));
