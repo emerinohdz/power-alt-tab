@@ -10,14 +10,14 @@ nuevebit.gs = nuevebit.gs || {};
     const Utils = ExtensionUtils.getCurrentExtension().imports.utils;
     const WSSwitcherStarter = Utils.use("nuevebit.gs.WSSwitcherStarter");
     const AppSwitcherStarter = Utils.use("nuevebit.gs.AppSwitcherStarter");
+    const MRUWorkspaceManager = Utils.use("nuevebit.gs.MRUWorkspaceManager");
     const Meta = imports.gi.Meta;
     const Main = imports.ui.main;
     const Lang = imports.lang;
 
-    //const WorkspaceSwitcher = Utils.use("nuevebit.gs.WorkspaceSwitcher");
-
     /**
      * Takes the necessary actions to enable or disable the PowerAltTab extension.
+     * TODO: DI container
      * 
      * @param array opts
      * @returns {nuevebit.gs.ExtensionService}
@@ -25,15 +25,13 @@ nuevebit.gs = nuevebit.gs || {};
     gs.ExtensionService = function (opts) {
         opts = opts || {};
 
-        // TODO: DI container
-
         this.enable = function () {
-            let wsSwitcher = opts.switcher || new WorkspaceSwitcher();
+            let wsManager = opts.manager || new MRUWorkspaceManager();
             let wsStarter
-                    = opts.wsStarter || new WSSwitcherStarter(wsSwitcher);
+                    = opts.wsStarter || new WSSwitcherStarter(wsManager);
 
             // init workspaces
-            wsSwitcher.changeWorkspaces();
+            wsManager.updateWorkspaces();
 
             // when enabled, show the WS switcher popup instead of the default
             // WM switcher on switch-group
@@ -49,8 +47,13 @@ nuevebit.gs = nuevebit.gs || {};
         };
 
         function setKeybindingsHandler(startFunc) {
-            Meta.keybindings_set_custom_handler('switch-group', startFunc);
-            Meta.keybindings_set_custom_handler('switch-group-backward', startFunc);
+            Meta.keybindings_set_custom_handler(
+                    'switch-group',
+                    startFunc);
+
+            Meta.keybindings_set_custom_handler(
+                    'switch-group-backward',
+                    startFunc);
         }
     };
 

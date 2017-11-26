@@ -5,96 +5,30 @@
  * Some code reused (and some stolen) from ui.altTab script.
  */
 
-const Clutter = imports.gi.Clutter;
-const St = imports.gi.St;
-const Shell = imports.gi.Shell;
-const Mainloop = imports.mainloop;
-const Main = imports.ui.main;
-const Tweener = imports.ui.tweener;
-const Meta = imports.gi.Meta;
 const Lang = imports.lang;
-const AltTab = imports.ui.altTab;
-const WorkspaceThumbnail = imports.ui.workspaceThumbnail;
-const SwitcherPopup = imports.ui.switcherPopup;
-
 const ExtensionUtils = imports.misc.extensionUtils;
 const Utils = ExtensionUtils.getCurrentExtension().imports.utils;
-const ExtensionService
-        = Utils.use("nuevebit.gs.ExtensionService");
 
+const MRUWorkspaceManager = Utils.use("nuevebit.gs.MRUWorkspaceManager");
+const ExtensionService = Utils.use("nuevebit.gs.ExtensionService");
 
-const MRUAltTabManager = new Lang.Class({
-    Name: 'MRUAltTabManager',
-
-    _init: function (workspaces) {
-        this._workspaces = workspaces || [];
-
-        //this.changeWorkspaces();
-    },
-    getWorkspaces: function() {
-        return this._workspaces;
-    },
-
-    changeWorkspaces: function () {
-        let workspaces = [];
-
-        for (let i = 0; i < global.screen.n_workspaces; ++i) {
-            let ws = global.screen.get_workspace_by_index(i);
-
-            workspaces.push(ws);
-        }
-
-        if (this._workspaces.length) {
-            let orderedWorkspaces = [];
-
-            for (let i in this._workspaces) {
-                let ws = this._workspaces[i];
-
-                let index = workspaces.indexOf(ws);
-
-                if (index != -1) {
-                    workspaces.splice(index, 1);
-
-                    orderedWorkspaces.push(ws);
-                }
-            }
-
-            workspaces = orderedWorkspaces.concat(workspaces);
-        }
-
-        this._workspaces = workspaces;
-    },
-
-    switchWorkspace: function () {
-        let currentWorkspace = global.screen.get_active_workspace();
-        let workspaceIndex = this._workspaces.indexOf(currentWorkspace);
-
-        if (workspaceIndex != -1) {
-            this._workspaces.splice(workspaceIndex, 1);
-        }
-
-        this._workspaces.unshift(currentWorkspace);
-    },
-
-
-});
 
 const PowerAltTab = new Lang.Class({
     Name: "PowerAltTab",
 
     _init: function () {
-        this._switcher = new MRUAltTabManager();
+        this._manager = new MRUWorkspaceManager();
         this._extensionService = new ExtensionService({
-            switcher: this._switcher
-        }); 
+            manager: this._manager
+        });
     },
 
     enable: function () {
         Utils.connectAndTrack(this, global.screen, "notify::n-workspaces",
-                Lang.bind(this._switcher, this._switcher.changeWorkspaces));
+                Lang.bind(this._manager, this._manager.updateWorkspaces));
 
         Utils.connectAndTrack(this, global.window_manager, "switch-workspace",
-                Lang.bind(this._switcher, this._switcher.switchWorkspace));
+                Lang.bind(this._manager, this._manager.switchActiveWorkspace));
 
         this._extensionService.enable();
     },

@@ -15,16 +15,16 @@ nuevebit.gs = nuevebit.gs || {};
     /**
      * WS SwitcherStarter, handles showing the Workspace Switcher popup.
      * 
-     * @param {nuevebit.gs.WorkspaceSwitcher} switcher
+     * @param {nuevebit.gs.WorkspaceSwitcher} manager
      */
-    gs.WSSwitcherStarter = function (switcher) {
+    gs.WSSwitcherStarter = function (manager) {
 
         this.start = function (display, screen, win, binding) {
             let modifiers = binding.get_modifiers();
             let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
 
             // use the WS switcher popup
-            let popup = new WorkspaceSwitcherPopup(switcher.getWorkspaces());
+            let popup = new WorkspaceSwitcherPopup(manager.getWorkspaces());
 
             if (!popup.show(backwards, binding.get_name(), binding.get_mask())) {
                 popup.destroy();
