@@ -1,58 +1,58 @@
-/* 
+/*  
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
 var nuevebit = nuevebit || {};
 nuevebit.gs = nuevebit.gs || {};
 
-/**
- * Takes the necessary actions to enable or disable the PowerAltTab extension.
- * 
- * @param array opts
- * @returns {nuevebit.gs.ExtensionService}
- */
-nuevebit.gs.ExtensionService = function (opts) {
-    opts = opts || {};
+(function (gs) {
+    const ExtensionUtils = imports.misc.extensionUtils;
+    const Utils = ExtensionUtils.getCurrentExtension().imports.utils;
+    const WSSwitcherStarter = Utils.use("nuevebit.gs.WSSwitcherStarter");
+    const AppSwitcherStarter = Utils.use("nuevebit.gs.AppSwitcherStarter");
+    const Meta = imports.gi.Meta;
+    const Main = imports.ui.main;
+    const Lang = imports.lang;
 
-    // TODO: DI container
-    var wm = opts.wm || Main.wm;
-    var meta = opts.meta || Meta;
-    var manager = opts.manager;
+    //const WorkspaceSwitcher = Utils.use("nuevebit.gs.WorkspaceSwitcher");
 
-    // handler lookup of the default GS switcher starter function (fully binded)
-    // this is needed in order to maintain backwards compatibility between 
-    // GS versions, because the name of the method changes constantly
-    var switcherStarter = opts.switcherLookup;
+    /**
+     * Takes the necessary actions to enable or disable the PowerAltTab extension.
+     * 
+     * @param array opts
+     * @returns {nuevebit.gs.ExtensionService}
+     */
+    gs.ExtensionService = function (opts) {
+        opts = opts || {};
 
-    this.enable = function () {
-        // init workspaces
-        manager.changeWorkspaces();
+        // TODO: DI container
 
-        // when enabled, show the WS switcher popup instead of the default
-        // WM switcher on switch-group
-        setKeybindingsHandler(showPATSwitcher);
-    };
+        this.enable = function () {
+            let wsSwitcher = opts.switcher || new WorkspaceSwitcher();
+            let wsStarter
+                    = opts.wsStarter || new WSSwitcherStarter(wsSwitcher);
 
-    this.disable = function () {
-        // show default GS switcher on switch-group
-        setKeybindingsHandler(switcherStarter.lookup());
-    };
+            // init workspaces
+            wsSwitcher.changeWorkspaces();
 
-    function showPATSwitcher(display, screen, win, binding) {
-        let modifiers = binding.get_modifiers();
-        let backwards = modifiers & meta.VirtualModifier.SHIFT_MASK;
+            // when enabled, show the WS switcher popup instead of the default
+            // WM switcher on switch-group
+            setKeybindingsHandler(Lang.bind(wsStarter, wsStarter.start));
+        };
 
-        let popup = new WorkspaceSwitcherPopup(manager.getWorkspaces());
+        this.disable = function () {
+            let appStarter
+                    = opts.appStarter || new AppSwitcherStarter(Main.wm);
 
-        if (!popup.show(backwards, binding.get_name(), binding.get_mask())) {
-            popup.destroy();
+            // show default GS switcher on switch-group
+            setKeybindingsHandler(Lang.bind(appStarter, appStarter.start));
+        };
+
+        function setKeybindingsHandler(startFunc) {
+            Meta.keybindings_set_custom_handler('switch-group', startFunc);
+            Meta.keybindings_set_custom_handler('switch-group-backward', startFunc);
         }
-    }
+    };
 
-    function setKeybindingsHandler(startFunc) {
-        meta.keybindings_set_custom_handler('switch-group', startFunc);
-        meta.keybindings_set_custom_handler('switch-group-backward', startFunc);
-    }
-};
-
+})(nuevebit.gs);
 

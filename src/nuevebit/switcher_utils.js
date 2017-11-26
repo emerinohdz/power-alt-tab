@@ -22,6 +22,12 @@ nuevebit.gs = nuevebit.gs || {};
             if (!switcher) {
                 switcher = wm._startSwitcher; // support GS >= 3.26.2
             }
+
+            if (!switcher) {
+                throw "No starter method available in current WM";
+            }
+
+            return switcher;
         }
     };
 

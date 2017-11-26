@@ -6,24 +6,49 @@
 // unit testing
 var log = console.log;
 
-// Lang global
-var Lang = {
-    bind: function (context, func, args) {
-        _.bind(func, context, args);
+var classFinder = {
+    use: function (name) {
+        return eval(name);
     }
 };
 
-// Meta global
-var Meta = {
-    keybindings_set_custom_handler: function (key, handler) {
-
+var imports = {
+    lang: {
+        bind: function (context, func, args) {
+            _.bind(func, context, args);
+        },
+        Class: function(obj) {
+            return obj;
+        }
     },
-    VirtualModifier: {
-        SHIFT_MASK: 1
-    }
-};
+    misc: {
+        extensionUtils: {
+            getCurrentExtension: function () {
+                return {
+                    imports: {
+                        utils: classFinder
+                    }
+                };
+            }
+        }
+    },
+    gi: {
+        Meta: {
+            keybindings_set_custom_handler: function (key, handler) {
 
-// Main global
-var Main = {
-    wm: {}
+            },
+            VirtualModifier: {
+                SHIFT_MASK: 1
+            }
+        }
+    },
+    ui: {
+        switcherPopup: {
+            SwitcherPopup: {},
+            SwitcherList: {}
+        },
+        Main: {
+            wm: {}
+        }
+    }
 };
