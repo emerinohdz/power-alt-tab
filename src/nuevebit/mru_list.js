@@ -13,7 +13,7 @@ nuevebit.gs = nuevebit.gs || {};
     /**
      * Keeps a list of items ordered by Most Recently Used. Items can be
      * updated (added/removed) and can be switched to the start of the
-     * list.
+     * list (which will be the most recently used item).
      */
     gs.MRUList = function (items) {
         items = items.concat([]) || [];
