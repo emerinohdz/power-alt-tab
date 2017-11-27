@@ -2,8 +2,7 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-var nuevebit = nuevebit || {};
-nuevebit.gs = nuevebit.gs || {};
+var gs = gs || {};
 
 (function (gs) {
 
@@ -66,6 +65,19 @@ nuevebit.gs = nuevebit.gs || {};
         };
 
         /**
+         * Returns a list containing the tracked signals.
+         * 
+         */
+        this.getTrackedSignals = function () {
+            return Object.entries(trackedSignals).map(function (e, i) {
+                return {
+                    guid: e[0],
+                    tracked: e[1]
+                }
+            });
+        };
+
+        /**
          * Disconnects and untracks the given tracked signal.
          * 
          * @param {string} guid the globally assigned GUID for the tracked signal.
@@ -84,4 +96,4 @@ nuevebit.gs = nuevebit.gs || {};
             });
         };
     };
-})(nuevebit.gs);
+})(gs);

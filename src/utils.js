@@ -14,11 +14,16 @@ const importer = ExtensionUtils.getCurrentExtension().imports;
 // TODO: Improve to make class importing automatic
 let classes = {};
 
+// GS API
+classes["gs.SignalTracker"]
+        = importer.gs.signal_tracker.gs.SignalTracker;
+
+classes["nuevebit.gs.GSScreen"]
+        = importer.gs.gs_screen.gs.GSScreen;
+
+// extension API
 classes["nuevebit.gs.SwitcherUtils"]
         = importer.nuevebit.switcher_utils.nuevebit.gs.SwitcherUtils;
-
-classes["nuevebit.gs.SignalTracker"]
-        = importer.nuevebit.signal_tracker.nuevebit.gs.SignalTracker;
 
 classes["nuevebit.gs.AppSwitcherStarter"]
         = importer.nuevebit.app_switcher_starter.nuevebit.gs.AppSwitcherStarter;
@@ -34,9 +39,6 @@ classes["nuevebit.gs.WSSwitcherStarter"]
 
 classes["nuevebit.gs.MRUList"]
         = importer.nuevebit.mru_list.nuevebit.gs.MRUList;
-
-classes["nuevebit.gs.GSScreen"]
-        = importer.nuevebit.gs_screen.nuevebit.gs.GSScreen;
 
 classes["nuevebit.gs.MRUWorkspaceManager"]
         = importer.nuevebit.mru_workspace_manager.nuevebit.gs.MRUWorkspaceManager;

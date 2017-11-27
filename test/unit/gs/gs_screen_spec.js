@@ -2,11 +2,10 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-var nuevebit = nuevebit || {};
-nuevebit.gs = nuevebit.gs || {};
+var gs = gs || {};
 
 describe("GSScreen", function () {
-    const GSScreen = nuevebit.gs.GSScreen;
+    const GSScreen = gs.GSScreen;
 
     it("should return the list of workspaces", function () {
         let screen = new GSScreen({

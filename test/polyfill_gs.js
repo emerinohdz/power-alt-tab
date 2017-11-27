@@ -8,7 +8,20 @@ var log = console.log;
 
 var classFinder = {
     use: function (name) {
+        // TODO: it should delay loading of the actual class until the first
+        // instance is created
         return eval(name);
+    }
+};
+
+var global = {
+    screen: {
+        connect:function(signal, cb){},
+        disconnect: function(id){}
+    },
+    window_manager: {
+        connect:function(signal, cb){},
+        disconnect: function(id){}
     }
 };
 
@@ -17,7 +30,7 @@ var imports = {
         bind: function (context, func, args) {
             _.bind(func, context, args);
         },
-        Class: function(obj) {
+        Class: function (obj) {
             return obj;
         }
     },
@@ -47,7 +60,7 @@ var imports = {
             SwitcherPopup: {},
             SwitcherList: {}
         },
-        Main: {
+        main: {
             wm: {}
         }
     }

@@ -11,14 +11,15 @@ nuevebit.gs = nuevebit.gs || {};
     const WSSwitcherStarter = Utils.use("nuevebit.gs.WSSwitcherStarter");
     const AppSwitcherStarter = Utils.use("nuevebit.gs.AppSwitcherStarter");
     const MRUWorkspaceManager = Utils.use("nuevebit.gs.MRUWorkspaceManager");
-    const SignalTracker = Utils.use("nuevebit.gs.SignalTracker");
+    const SignalTracker = Utils.use("gs.SignalTracker");
+    const GSScreen = Utils.use("gs.GSScreen");
     const Meta = imports.gi.Meta;
     const Main = imports.ui.main;
     const Lang = imports.lang;
 
     /**
      * Takes the necessary actions to enable or disable the PowerAltTab extension.
-     * TODO: DI container
+     * TODO: implement a DI container
      * 
      * @param array opts
      * @returns {nuevebit.gs.ExtensionService}
@@ -26,12 +27,11 @@ nuevebit.gs = nuevebit.gs || {};
     gs.ExtensionService = function (opts) {
         opts = opts || {};
         let signalTracker = opts.tracker || new SignalTracker();
+        let screen = opts.screen || new GSScreen();
+        let wsManager = opts.manager || new MRUWorkspaceManager(screen);
+        let wsStarter = opts.wsStarter || new WSSwitcherStarter(wsManager);
 
         this.enable = function () {
-            let wsManager = opts.manager || new MRUWorkspaceManager();
-            let wsStarter
-                    = opts.wsStarter || new WSSwitcherStarter(wsManager);
-
             // track worskpaces added or deleted
             signalTracker.track(
                     global.screen,
@@ -53,16 +53,17 @@ nuevebit.gs = nuevebit.gs || {};
         };
 
         this.disable = function () {
-            let appStarter
-                    = opts.appStarter || new AppSwitcherStarter(Main.wm);
-
             // untrack all tracked signals
             signalTracker.untrackAll();
+
+            let appStarter = opts.appStarter || new AppSwitcherStarter(Main.wm);
 
             // show default GS switcher on switch-group
             setKeybindingsHandler(Lang.bind(appStarter, appStarter.start));
         };
 
+        // TODO: This should be part of the API, instead of calling directly
+        // GI functions (which may change more often)
         function setKeybindingsHandler(startFunc) {
             Meta.keybindings_set_custom_handler(
                     'switch-group',

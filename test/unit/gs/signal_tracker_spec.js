@@ -2,12 +2,10 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-var nuevebit = nuevebit || {};
-nuevebit.gs = nuevebit.gs || {};
-
+var gs = gs || {};
 
 describe("SignalTracker", function () {
-    const SignalTracker = nuevebit.gs.SignalTracker;
+    const SignalTracker = gs.SignalTracker;
 
     it("should return the GUID for the tracked signal", function() {
         let tracker = new SignalTracker();
@@ -52,6 +50,16 @@ describe("SignalTracker", function () {
 
         expect(tracker.find(guid1)).toBeNull();
         expect(tracker.find(guid2)).toBeNull();
+    });
+        
+    it("should return the tracked signals", function() {
+        let tracker = new SignalTracker();
+        tracker.track(newSubject(), "test", null);
+        tracker.track(newSubject(), "test2", null);
+
+        let tracked = tracker.getTrackedSignals();
+        expect(tracked[0].tracked.signal).toBe("test");
+        expect(tracked[1].tracked.signal).toBe("test2");
     });
 
     function newSubject() {
