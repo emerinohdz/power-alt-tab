@@ -13,7 +13,7 @@ const ExtensionService = Utils.use("nuevebit.gs.ExtensionService");
 
 let extensionService = null;
 
-function init() {
+function init() { 
     extensionService = new ExtensionService();
 }
 

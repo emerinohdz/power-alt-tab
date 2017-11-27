@@ -5,8 +5,6 @@
 var gs = gs || {};
 
 (function (gs) {
-    const ExtensionUtils = imports.misc.extensionUtils;
-    const Utils = ExtensionUtils.getCurrentExtension().imports.utils;
 
     /**
      * Gnome Shell global.screen wrapper. 

@@ -2,9 +2,6 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-var nuevebit = nuevebit || {};
-nuevebit.gs = nuevebit.gs || {};
-
 describe("ExtensionService", function () {
     const ExtensionService = nuevebit.gs.ExtensionService;
     const SignalTracker = gs.SignalTracker;

@@ -2,9 +2,6 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-var nuevebit = nuevebit || {};
-nuevebit.gs = nuevebit.gs || {};
-
 describe("MRUWorkspaceManager", function () {
     var MRUWorkspaceManager = nuevebit.gs.MRUWorkspaceManager;
 

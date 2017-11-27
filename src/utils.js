@@ -18,7 +18,7 @@ let classes = {};
 classes["gs.SignalTracker"]
         = importer.gs.signal_tracker.gs.SignalTracker;
 
-classes["nuevebit.gs.GSScreen"]
+classes["gs.GSScreen"]
         = importer.gs.gs_screen.gs.GSScreen;
 
 // extension API

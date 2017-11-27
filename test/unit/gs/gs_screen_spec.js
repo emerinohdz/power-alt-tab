@@ -2,8 +2,6 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-var gs = gs || {};
-
 describe("GSScreen", function () {
     const GSScreen = gs.GSScreen;
 

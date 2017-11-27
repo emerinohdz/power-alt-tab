@@ -16,7 +16,7 @@ nuevebit.gs = nuevebit.gs || {};
     const Meta = imports.gi.Meta;
     const Main = imports.ui.main;
     const Lang = imports.lang;
-
+ 
     /**
      * Takes the necessary actions to enable or disable the PowerAltTab extension.
      * TODO: implement a DI container
@@ -27,7 +27,7 @@ nuevebit.gs = nuevebit.gs || {};
     gs.ExtensionService = function (opts) {
         opts = opts || {};
         let signalTracker = opts.tracker || new SignalTracker();
-        let screen = opts.screen || new GSScreen();
+        let screen = opts.screen || new GSScreen(global.screen);
         let wsManager = opts.manager || new MRUWorkspaceManager(screen);
         let wsStarter = opts.wsStarter || new WSSwitcherStarter(wsManager);
 
