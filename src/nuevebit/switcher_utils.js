@@ -20,7 +20,7 @@ nuevebit.gs = nuevebit.gs || {};
          * Handles lookup of the default GS start switcher method, depending
          * on the current GS version.
          * 
-         * @returns {string}
+         * @returns {function}
          */
         lookup: function (wm) {
             let switcher;
