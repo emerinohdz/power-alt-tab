@@ -5,31 +5,40 @@
 describe("SwitcherUtils", function () {
     var gs = nuevebit.gs;
 
-    it("should lookup the starter function for GS >= 3.26.2", function () {
+    it("should lookup the starter function for GS _startSwitcher", function () {
         // singleton
         let utils = gs.SwitcherUtils;
-        let wm = newWM_GS3_26_2();
+        let wm = newWM_startSwitcher();
         let func = utils.lookup(wm);
 
         expect(func).toBe(wm._startSwitcher);
     });
 
-    it("should lookup the starter function for GS == 3.26", function () {
+    it("should lookup the starter function for GS __startSwitcher", function () {
         // singleton
         let utils = gs.SwitcherUtils;
-        let wm = newWM_GS3_26();
+        let wm = newWM__startSwitcher();
         let func = utils.lookup(wm);
 
         expect(func).toBe(wm.__startSwitcher);
     });
 
-    it("should lookup the starter function for GS < 3.26", function () {
+    it("should lookup the starter function for GS __startAppSwitcher", function () {
         // singleton
         let utils = gs.SwitcherUtils;
-        let wm = newWM_GSOld();
+        let wm = newWM__startAppSwitcher();
         let func = utils.lookup(wm);
 
         expect(func).toBe(wm.__startAppSwitcher);
+    });
+
+    it("should lookup the starter function for GS _startAppSwitcher", function () {
+        // singleton
+        let utils = gs.SwitcherUtils;
+        let wm = newWM_startAppSwitcher();
+        let func = utils.lookup(wm);
+
+        expect(func).toBe(wm._startAppSwitcher);
     });
 
     it("should fail if it cannot lookup the function with any of the known names", function () {
@@ -47,7 +56,7 @@ describe("SwitcherUtils", function () {
         }).toThrow("No starter method available in current WM");
     });
 
-    function newWM_GS3_26_2() {
+    function newWM_startSwitcher() {
         return {
             _startSwitcher: function () {
                 // no-op GS >= 3.26.2 method
@@ -55,7 +64,7 @@ describe("SwitcherUtils", function () {
         };
     }
 
-    function newWM_GS3_26() {
+    function newWM__startSwitcher() {
         return {
             __startSwitcher: function () {
 
@@ -63,9 +72,17 @@ describe("SwitcherUtils", function () {
         };
     }
 
-    function newWM_GSOld() {
+    function newWM__startAppSwitcher() {
         return {
             __startAppSwitcher: function () {
+
+            }
+        };
+    }
+
+    function newWM_startAppSwitcher() {
+        return {
+            _startAppSwitcher: function () {
 
             }
         };

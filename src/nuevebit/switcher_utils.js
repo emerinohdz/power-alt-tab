@@ -6,22 +6,29 @@ var nuevebit = nuevebit || {};
 nuevebit.gs = nuevebit.gs || {};
 
 (function (gs) {
+
+    // supported function names
+    let supported = [
+        "_startSwitcher",
+        "_startAppSwitcher",
+        "__startAppSwitcher",
+        "__startSwitcher"
+    ];
+
     gs.SwitcherUtils = {
         /**
          * Handles lookup of the default GS start switcher method, depending
          * on the current GS version.
-         * TODO: Improve.
          * 
          * @returns {string}
          */
         lookup: function (wm) {
-            var switcher = (typeof wm.__startSwitcher !== "undefined")
-                    ? wm.__startSwitcher // support GS 3.26
-                    : wm.__startAppSwitcher; // support GS < 3.26
-
-            if (!switcher) {
-                switcher = wm._startSwitcher; // support GS >= 3.26.2
-            }
+            let switcher;
+            supported.forEach(function(name) {
+                if (typeof wm[name] !== "undefined") {
+                    switcher = wm[name];
+                }
+            });
 
             if (!switcher) {
                 throw "No starter method available in current WM";
