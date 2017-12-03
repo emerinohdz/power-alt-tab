@@ -2,7 +2,6 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-import Meta from "gi/meta";
 import MRUList from "nuevebit/mru_list";
 
 /**

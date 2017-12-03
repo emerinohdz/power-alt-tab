@@ -2,7 +2,7 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-import Meta from "gi/meta";
+import {Meta} from "core";
 import WorkspaceSwitcherPopup from "nuevebit/workspace_switcher_popup";
 
 /**

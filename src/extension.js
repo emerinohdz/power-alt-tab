@@ -4,20 +4,18 @@
  *
  */
 
-import {Lang} from "core";
+import ExtensionService from "nuevebit/extension_service";
 
-log("voy");
-log(imports.ui);
-log("voy 2 sirvo");
-let i = Lang;
-log(i);
+let extensionService = null;
 
 export function init() {
-    //extensionService = new ExtensionService();
+    extensionService = new ExtensionService();
 }
 
 export function enable() {
+    extensionService.enable();
 }
 
 export function disable() {
+    extensionService.disable();
 }
