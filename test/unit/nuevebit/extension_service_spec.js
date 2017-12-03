@@ -38,6 +38,7 @@ describe("ExtensionService", function () {
 
     function newWSManager() {
         return {
+            getWorkspaces: function(){ return [];},
             updateWorkspaces: function () {},
             switchActiveWorkspace: function () {}
         };

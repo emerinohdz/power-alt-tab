@@ -6,14 +6,6 @@
 // unit testing
 var log = console.log;
 
-const classFinder = {
-    use: function (name) {
-        // TODO: it should delay loading of the actual class until the first
-        // instance is created
-        return eval(name);
-    }
-}
-
 window.global = {
     screen: {
         connect: function (signal, cb) {},
@@ -64,12 +56,4 @@ const imports = {
             wm: {}
         }
     }
-}
-
-//module.exports = {
-//// GS uses log() to write to stdout, we should include this polyfill for
-//// unit testing
-//    log: console.log,
-//    imports: imports,
-//    global: global
-//};
+};

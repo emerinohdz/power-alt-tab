@@ -1,11 +1,15 @@
 
-import {Meta, Main, Lang, Mainloop, Clutter, St, Shell, Tweener, AltTab, WorkspaceThumbnail, SwitcherList} from "core";
+import {Main, Lang, Clutter, St, AltTab, WorkspaceThumbnail, SwitcherList} from "core";
 
-export default class WorkspaceThumbnailList extends SwitcherList {
-    constructor(workspaces) {
-        super(true);
+// TODO: there are problems when extending using ES6 classes and transpiling with
+// babel, calling super constructor throws an error
+const WorkspaceThumbnailList = new Lang.Class({
+    Name: 'WorkspaceThumbnailList',
+    Extends: SwitcherList,
 
-        let activeWorkspace = window.global.screen.get_active_workspace();
+    _init: function (workspaces) {
+        this.parent(true);
+
         let panelHeight = Main.panel.actor.height;
         let monitor = Main.layoutManager.primaryMonitor;
 
@@ -44,10 +48,10 @@ export default class WorkspaceThumbnailList extends SwitcherList {
             this.addItem(box, name);
 
         }
-    }
+    },
 
     // We need to scale the workspaces here
-    _allocate(actor, box, flags) {
+    _allocate: function (actor, box, flags) {
         this.parent(actor, box, flags);
 
         let panelHeight = Main.panel.actor.height;
@@ -66,9 +70,9 @@ export default class WorkspaceThumbnailList extends SwitcherList {
             this._clones[i].set_scale(scale, scale);
             this._clones[i].allocate(childBox, flags);
         }
-    }
+    },
 
-    addClones(availHeight) {
+    addClones: function (availHeight) {
         if (!this._thumbnailBins.length)
             return;
         let totalPadding = this._items[0].get_theme_node().get_horizontal_padding() + this._items[0].get_theme_node().get_vertical_padding();
@@ -96,4 +100,6 @@ export default class WorkspaceThumbnailList extends SwitcherList {
         this._thumbnailBins = [];
         this._availHeight = availHeight;
     }
-}
+});
+
+export default WorkspaceThumbnailList;
