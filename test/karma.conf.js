@@ -1,4 +1,6 @@
 // Karma configuration
+var webpackConfig = require('../webpack.config.js');
+delete webpackConfig.entry; 
 
 module.exports = function (config) {
     config.set({
@@ -7,11 +9,6 @@ module.exports = function (config) {
         // frameworks to use
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
         frameworks: ['jasmine'],
-        plugins: [
-            'karma-phantomjs-launcher',
-            'karma-firefox-launcher',
-            'karma-jasmine'
-        ],
         // list of files / patterns to load in the browser
         // TODO: care should be taken with the order in which these are included,
         // if a "class" tries to be "imported" before it gets a chance to be
@@ -22,9 +19,11 @@ module.exports = function (config) {
         files: [
             "node_modules/underscore/underscore.js",
             "test/polyfill_gs.js",
-            "src/gs/**/*.js",
-            "src/nuevebit/**/*.js",
-            "test/unit/**/*.js"
+            "test/unit/gs/signal_tracker_spec.js"
+                    //"test/test-main.js",
+                    //{pattern: 'build/js/gs/**/*.js', included: false},
+                    //{pattern: 'build/js/nuevebit/**/*.js', included: false},
+                    //{pattern: 'build/test/nuevebit/mru_list_spec.js', included: false}
         ],
         // list of files to exclude
         exclude: [
@@ -32,6 +31,16 @@ module.exports = function (config) {
         // preprocess matching files before serving them to the browser
         // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
         preprocessors: {
+            // add webpack as preprocessor
+            "src/**/*.js": ["webpack"],
+            'test/unit/*_spec.js': ['webpack'],
+            'test/unit/**/*_spec.js': ['webpack']
+        },
+        webpack: webpackConfig,
+        webpackMiddleware: {
+            // webpack-dev-middleware configuration
+            // i. e.
+            stats: 'errors-only'
         },
         // test results reporter to use
         // possible values: 'dots', 'progress'
@@ -48,7 +57,7 @@ module.exports = function (config) {
         autoWatch: true,
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-        browsers: ['Firefox'],
+        browsers: ['Firefox', 'PhantomJS'],
         // Continuous Integration mode
         // if true, Karma captures browsers, runs the tests and exits
         singleRun: false,

@@ -5,7 +5,7 @@
 var path = require('path');
 
 module.exports = {
-    entry: "./src/extension.js",
+    entry: "./src/gs/signal_tracker.js",
     output: {
         filename: "dist/extension.js",
         libraryTarget: 'umd',
@@ -14,6 +14,27 @@ module.exports = {
         modules: [
             path.resolve('./src'),
             'node_modules'
+        ]
+    },
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                exclude: /(node_modules|bower_components)/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: [
+                            require('babel-preset-env'),
+                            require('babel-preset-es2017'),
+                        ],
+                        plugins: [
+                            require('babel-plugin-transform-runtime'),
+                            require('babel-plugin-transform-es2015-modules-umd'),
+                        ]
+                    }
+                }
+            }
         ]
     },
     externals: {

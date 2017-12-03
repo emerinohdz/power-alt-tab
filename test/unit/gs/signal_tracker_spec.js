@@ -2,17 +2,18 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-describe("SignalTracker", function () {
-    const SignalTracker = gs.SignalTracker;
+import SignalTracker from "gs/signal_tracker";
 
-    it("should return the GUID for the tracked signal", function() {
+describe("SignalTracker", function () {
+
+    it("should return the GUID for the tracked signal", function () {
         let tracker = new SignalTracker();
         let guid = tracker.track(newSubject(), "test", null);
-
-        expect(guid).not.toBeNull();
+ 
+        expect(guid).not.toBeNull(); 
     });
 
-    it("should return the given tracked signal", function() {
+    it("should return the given tracked signal", function () {
         let tracker = new SignalTracker();
         let subject = newSubject();
         let guid = tracker.track(subject, "test", null);
@@ -24,7 +25,7 @@ describe("SignalTracker", function () {
         expect(tracked.id).toBe(1);
     });
 
-    it("should untrack the given signal", function() {
+    it("should untrack the given signal", function () {
         let tracker = new SignalTracker();
         let guid = tracker.track(newSubject(), "test", null);
 
@@ -36,7 +37,7 @@ describe("SignalTracker", function () {
         expect(tracker.find(guid)).toBeNull();
     });
 
-    it("should untrack all signals", function() {
+    it("should untrack all signals", function () {
         let tracker = new SignalTracker();
         let guid1 = tracker.track(newSubject(), "test", null);
         let guid2 = tracker.track(newSubject(), "test2", null);
@@ -49,8 +50,8 @@ describe("SignalTracker", function () {
         expect(tracker.find(guid1)).toBeNull();
         expect(tracker.find(guid2)).toBeNull();
     });
-        
-    it("should return the tracked signals", function() {
+
+    it("should return the tracked signals", function () {
         let tracker = new SignalTracker();
         tracker.track(newSubject(), "test", null);
         tracker.track(newSubject(), "test2", null);
@@ -62,8 +63,10 @@ describe("SignalTracker", function () {
 
     function newSubject() {
         return {
-            connect: function(signal, cb) { return 1; },
-            disconnect: function(id) {}
+            connect: function (signal, cb) {
+                return 1;
+            },
+            disconnect: function (id) {}
         };
     }
 });
