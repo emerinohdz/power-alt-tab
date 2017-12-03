@@ -2,95 +2,87 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-var nuevebit = nuevebit || {};
-nuevebit.gs = nuevebit.gs || {};
+import Meta from "gi/meta";
 
-(function (gs) {
-    const Meta = imports.gi.Meta;
-    const ExtensionUtils = imports.misc.extensionUtils;
-    const Utils = ExtensionUtils.getCurrentExtension().imports.utils;
+/**
+ * Keeps a list of items ordered by Most Recently Used. Items can be
+ * updated (added/removed) and can be switched to the start of the
+ * list (which will be the most recently used item).
+ */
+export default class MRUList {
+    constructor(items) {
+        this.items = items.concat([]) || [];
+    }
+
+    toArray() {
+        return this.items.concat([]);
+    }
+
+    size() {
+        return this.items.length;
+    }
+
+    get(index) {
+        return this.items[index];
+    }
 
     /**
-     * Keeps a list of items ordered by Most Recently Used. Items can be
-     * updated (added/removed) and can be switched to the start of the
-     * list (which will be the most recently used item).
+     * Iterate the current list.
+     * 
+     * @param {function} callback
      */
-    gs.MRUList = function (items) {
-        items = items.concat([]) || [];
+    forEach(callback) {
+        this.items.forEach(callback);
+    }
 
-        this.toArray = function() {
-            return items.concat([]);
-        };
+    /**
+     * Updates the items list with the provided new items. Existing
+     * items retain their order and are placed first, new items are placed
+     * at the end of the list.
+     * 
+     * @param {array} newItems 
+     * 
+     */
+    update(newItems) {
+        // order workspaces, new workspaces are placed at the end
+        // of the list
+        if (this.items.length) {
+            let existing = [];
 
-        this.size = function() {
-            return items.length;
-        };
+            this.items.forEach(function (item) {
+                let index = newItems.indexOf(item);
 
-        this.get = function (index) {
-            return items[index];
-        };
+                // existing should go first
+                if (index !== -1) {
+                    // remove from newItems list
+                    newItems.splice(index, 1);
 
-        /**
-         * Iterate the current list.
-         * 
-         * @param {function} callback
-         */
-        this.forEach = function (callback) {
-            items.forEach(callback);
-        };
+                    existing.push(item);
+                }
+            });
 
-        /**
-         * Updates the items list with the provided new items. Existing
-         * items retain their order and are placed first, new items are placed
-         * at the end of the list.
-         * 
-         * @param {array} newItems 
-         * 
-         */
-        this.update = function (newItems) {
-            // order workspaces, new workspaces are placed at the end
-            // of the list
-            if (items.length) {
-                let existing = [];
+            // newItems added at the end
+            newItems = existing.concat(newItems);
+        }
 
-                items.forEach(function (item) {
-                    let index = newItems.indexOf(item);
+        // update current items
+        this.items = newItems;
+    }
 
-                    // existing should go first
-                    if (index !== -1) {
-                        // remove from newItems list
-                        newItems.splice(index, 1);
+    /**
+     * Moves item to the start of the list.
+     * 
+     * @param {mixed} item 
+     */
+    switch (item) {
+        let index = this.items.indexOf(item);
 
-                        existing.push(item);
-                    }
-                });
+        // remove from list
+        if (index !== -1) {
+            this.items.splice(index, 1);
+        }
 
-                // newItems added at the end
-                newItems = existing.concat(newItems);
-            }
-
-            // update current items
-            items = newItems;
-        };
-
-        /**
-         * Moves item to the start of the list.
-         * 
-         * @param {mixed} item 
-         */
-        this.switch = function (item) {
-            let index = items.indexOf(item);
-
-            // remove from list
-            if (index !== -1) {
-                items.splice(index, 1);
-            }
-
-            // add it back to the start
-            items.unshift(item);
-        };
-    };
-})(nuevebit.gs);
-
-
-
+        // add it back to the start
+        this.items.unshift(item);
+    }
+};

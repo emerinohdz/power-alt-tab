@@ -2,9 +2,9 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-describe("MRUList", function () {
-    var MRUList = nuevebit.gs.MRUList;
+import MRUList from "nuevebit/mru_list";
 
+describe("MRUList", function () {
     it("should return the items as an array", function(){
         var list = new MRUList([
             1, 2, 3

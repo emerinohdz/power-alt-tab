@@ -2,10 +2,10 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-describe("ExtensionService", function () {
-    const ExtensionService = nuevebit.gs.ExtensionService;
-    const SignalTracker = gs.SignalTracker;
+import ExtensionService from "nuevebit/extension_service"; 
+import SignalTracker from "gs/signal_tracker";
 
+describe("ExtensionService", function () {
     it("should enable the extension", function () {
         let tracker = new SignalTracker();
         // when enabled, signals should be tracked

@@ -19,11 +19,7 @@ module.exports = function (config) {
         files: [
             "node_modules/underscore/underscore.js",
             "test/polyfill_gs.js",
-            "test/unit/gs/signal_tracker_spec.js"
-                    //"test/test-main.js",
-                    //{pattern: 'build/js/gs/**/*.js', included: false},
-                    //{pattern: 'build/js/nuevebit/**/*.js', included: false},
-                    //{pattern: 'build/test/nuevebit/mru_list_spec.js', included: false}
+            "test/unit/**/*.js"
         ],
         // list of files to exclude
         exclude: [
@@ -33,6 +29,7 @@ module.exports = function (config) {
         preprocessors: {
             // add webpack as preprocessor
             "src/**/*.js": ["webpack"],
+            //'test/polyfill_gs.js': ['webpack'],
             'test/unit/*_spec.js': ['webpack'],
             'test/unit/**/*_spec.js': ['webpack']
         },

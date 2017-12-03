@@ -4,10 +4,14 @@
 
 var path = require('path');
 
+
 module.exports = {
-    entry: "./src/gs/signal_tracker.js",
+    entry: {
+        core: "./src/core.js",
+        extension: "./src/extension.js"
+    },
     output: {
-        filename: "dist/extension.js",
+        filename: "dist/[name].js",
         libraryTarget: 'umd',
     },
     resolve: {
@@ -34,17 +38,21 @@ module.exports = {
                         ]
                     }
                 }
-            }
+            },
         ]
     },
     externals: {
         'gnome': 'global',
-        'lang': 'imports.lang',
+        'mainloop': 'imports.mainloop',
         'gi/meta': 'imports.gi.Meta',
         'gi/shell': 'imports.gi.Shell',
         'ui/main': 'imports.ui.main',
+        'ui/tweener': 'imports.ui.tweener',
+        'ui/altTab': 'imports.ui.altTab',
+        'ui/workspaceThumbnail': 'imports.ui.workspaceThumbnail',
         'ui/popupMenu': 'imports.ui.popupMenu',
         'ui/panelMenu': 'imports.ui.panelMenu',
+        'ui/switcherPopup': 'imports.ui.switcherPopup',
         'gi/atk': 'imports.gi.Atk',
         'gi/st': 'imports.gi.St',
         'gi/gtk': 'imports.gi.Gtk',

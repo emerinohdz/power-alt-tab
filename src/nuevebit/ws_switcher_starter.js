@@ -2,33 +2,28 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-var nuevebit = nuevebit || {};
-nuevebit.gs = nuevebit.gs || {};
+import Meta from "gi/meta";
+import WorkspaceSwitcherPopup from "nuevebit/workspace_switcher_popup";
 
-(function (gs) {
-    const Meta = imports.gi.Meta;
-    const ExtensionUtils = imports.misc.extensionUtils;
-    const Utils = ExtensionUtils.getCurrentExtension().imports.utils;
-    const WorkspaceSwitcherPopup 
-                = Utils.use("nuevebit.gs.WorkspaceSwitcherPopup");
+/**
+ * WS SwitcherStarter, handles showing the Workspace Switcher popup.
+ * 
+ * @param {nuevebit.gs.WorkspaceSwitcher} manager
+ */
+export default class WSSwitcherStarter {
+    constructor(manager) {
+        this.manager = manager;
+    }
 
-    /**
-     * WS SwitcherStarter, handles showing the Workspace Switcher popup.
-     * 
-     * @param {nuevebit.gs.WorkspaceSwitcher} manager
-     */
-    gs.WSSwitcherStarter = function (manager) {
+    start(display, screen, win, binding) {
+        let modifiers = binding.get_modifiers();
+        let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
 
-        this.start = function (display, screen, win, binding) {
-            let modifiers = binding.get_modifiers();
-            let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
+        // use the WS switcher popup
+        let popup = new WorkspaceSwitcherPopup(this.manager.getWorkspaces());
 
-            // use the WS switcher popup
-            let popup = new WorkspaceSwitcherPopup(manager.getWorkspaces());
-
-            if (!popup.show(backwards, binding.get_name(), binding.get_mask())) {
-                popup.destroy();
-            }
-        };
-    };
-})(nuevebit.gs);
+        if (!popup.show(backwards, binding.get_name(), binding.get_mask())) {
+            popup.destroy();
+        }
+    }
+}

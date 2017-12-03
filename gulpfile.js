@@ -13,6 +13,7 @@ var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var argv = require("yargs").argv; // cmd arguments support
 
+var babel = require('gulp-babel');
 var KarmaServer = require('karma').Server;
 
 // gulp plugins
@@ -22,22 +23,59 @@ var clean = require('gulp-clean');
 //extension metadata
 var metadata = JSON.parse(fs.readFileSync("metadata.json"));
 
+var installDir = argv.installDir || path.join(process.env.HOME, ".local/share/gnome-shell/extensions/");
+
 // local config
 var config = {
     srcDir: path.join(__dirname, "src"),
     distDir: path.join(__dirname, "dist"),
-    installDir: path.join(process.env.HOME, ".local/share/gnome-shell/extensions/" + metadata.uuid),
+    installDir: installDir + metadata.uuid,
     singleRun: argv.single || false,
     browser: argv.browser || "Firefox"
 };
 
-var enableExtension = function(enable, cb) {
+var enableExtension = function (enable, cb) {
     var option = enable ? "-e" : "-d";
     spawn("gnome-shell-extension-tool", [option, metadata.uuid], {stdio: "inherit"})
-            .on("exit", function() {
+            .on("exit", function () {
                 cb();
             });
 };
+
+var paths = {
+    src: ['src/**.js', 'src/*/**.js'],
+    dest: 'build/js',
+    specSrc: 'test/unit/**/*.js',
+    specDest: 'build/test',
+    spec: 'build/test/*_spec.js'
+};
+
+function build(src, dst) {
+    return gulp
+            .src(src)
+            .pipe(babel({
+                presets: [
+                    "env",
+                    "es2017"
+                ],
+                plugins: [
+                    "transform-runtime",
+                    "transform-es2015-modules-umd"
+                ],
+                //moduleIds: true
+            }))
+            .pipe(gulp.dest(dst));
+}
+
+gulp.task('build-src', function () {
+    return build(paths.src, paths.dest);
+});
+
+gulp.task('build-test', function () {
+    return build(paths.specSrc, paths.specDest);
+});
+
+gulp.task("build", ["build-src", "build-test"]);
 
 /**
  * Test tasks. Uses KARMA runner.
@@ -66,7 +104,7 @@ gulp.task('test', function (done) {
 /**
  * Clean dist dir
  */
-gulp.task("clean", function() {
+gulp.task("clean", function () {
     return gulp.src([config.distDir]).pipe(clean());
 });
 
@@ -74,11 +112,11 @@ gulp.task("clean", function() {
 /**
  * Create ZIP file for distribution to gse
  */
-gulp.task("dist", function() {
+gulp.task("dist", ["build", "test"], function () {
     return gulp.src([
-                "metadata.json",
-                config.srcDir + "/**/*"
-            ])
+        "metadata.json",
+        config.srcDir + "/**/*"
+    ])
             .pipe(zip(metadata.uuid + ".zip"))
             .pipe(gulp.dest(config.distDir));
 });
@@ -86,36 +124,36 @@ gulp.task("dist", function() {
 /**
  * Copy the extension to local extensions folder only
  */
-gulp.task("copy:extension", function() {
-    return gulp.src(["metadata.json", config.srcDir + "/**/*"])
+gulp.task("copy:extension", function () {
+    return gulp.src(["metadata.json", config.distDir + "/extension.js"])
             .pipe(gulp.dest(config.installDir));
 });
 
 /**
  * Enable extension.
  */
-gulp.task("enable", function(cb) {
+gulp.task("enable", function (cb) {
     enableExtension(true, cb);
 });
 
 /**
  * Disable extension.
  */
-gulp.task("disable", function(cb) {
+gulp.task("disable", function (cb) {
     enableExtension(false, cb);
 });
 
 /**
  * Install extension locally.
  */
-gulp.task("install", ["copy:extension"], function(cb) {
+gulp.task("install", ["copy:extension"], function (cb) {
     return gulp.start("enable");
 });
 
 /**
  * Uninstall extension locally. Removes install dir.
  */
-gulp.task("uninstall", ["disable"], function(cb) {
+gulp.task("uninstall", ["disable"], function (cb) {
     return gulp.src(config.installDir).pipe(clean({force: true}));
 });
 
@@ -123,14 +161,14 @@ gulp.task("uninstall", ["disable"], function(cb) {
 /**
  * Restart gnome shell task.
  */
-gulp.task("restart:gnome-shell", ["copy:extension"], function() {
+gulp.task("restart:gnome-shell", ["copy:extension"], function () {
     var out = fs.openSync('./out.log', 'a');
     var err = fs.openSync('./out.log', 'a');
-    var gs = spawn('gnome-shell', ["-r"], { detached: true });
-    gs.stdout.on("data", function(chunk) {
+    var gs = spawn('gnome-shell', ["-r"], {detached: true});
+    gs.stdout.on("data", function (chunk) {
         process.stdout.write(chunk.toString());
     });
-    gs.stderr.on("data", function(chunk) {
+    gs.stderr.on("data", function (chunk) {
         process.stdout.write(chunk.toString());
     });
 
@@ -141,6 +179,9 @@ gulp.task("restart:gnome-shell", ["copy:extension"], function() {
 /**
  * Watch files for changes and reinstall then restart gs
  */
-gulp.task("default", ["copy:extension"],  function() {
-    gulp.watch([config.srcDir + "/**/*"], ["restart:gnome-shell"]);
+gulp.task("default", ["build"], function () {
+    gulp.watch([
+        config.srcDir + "/**/*",
+        "test/**/*.js"
+    ], ["build"]);
 });

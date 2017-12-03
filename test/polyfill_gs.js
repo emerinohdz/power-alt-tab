@@ -6,26 +6,26 @@
 // unit testing
 var log = console.log;
 
-var classFinder = {
+const classFinder = {
     use: function (name) {
         // TODO: it should delay loading of the actual class until the first
         // instance is created
         return eval(name);
     }
-};
+}
 
-var global = {
+window.global = {
     screen: {
-        connect:function(signal, cb){},
-        disconnect: function(id){}
+        connect: function (signal, cb) {},
+        disconnect: function (id) {}
     },
     window_manager: {
-        connect:function(signal, cb){},
-        disconnect: function(id){}
+        connect: function (signal, cb) {},
+        disconnect: function (id) {}
     }
 };
 
-var imports = {
+const imports = {
     lang: {
         bind: function (context, func, args) {
             _.bind(func, context, args);
@@ -57,11 +57,19 @@ var imports = {
     },
     ui: {
         switcherPopup: {
-            SwitcherPopup: {},
-            SwitcherList: {}
+            SwitcherPopup: function() { },
+            SwitcherList: function(){ }
         },
         main: {
             wm: {}
         }
     }
-};
+}
+
+//module.exports = {
+//// GS uses log() to write to stdout, we should include this polyfill for
+//// unit testing
+//    log: console.log,
+//    imports: imports,
+//    global: global
+//};

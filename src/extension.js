@@ -2,25 +2,22 @@
  * Power Alt-Tab
  * @autor: emerino <emerino at gmail dot com>
  *
- * Some code reused (and some stolen) from ui.altTab script.
  */
 
-const Lang = imports.lang;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Utils = ExtensionUtils.getCurrentExtension().imports.utils;
+import {Lang} from "core";
 
-const ExtensionService = Utils.use("nuevebit.gs.ExtensionService");
+log("voy");
+log(imports.ui);
+log("voy 2 sirvo");
+let i = Lang;
+log(i);
 
-let extensionService = null;
-
-function init() { 
-    extensionService = new ExtensionService();
+export function init() {
+    //extensionService = new ExtensionService();
 }
 
-function enable() {
-    extensionService.enable();
+export function enable() {
 }
 
-function disable() {
-    extensionService.disable();
+export function disable() {
 }

@@ -2,9 +2,9 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-describe("MRUWorkspaceManager", function () {
-    var MRUWorkspaceManager = nuevebit.gs.MRUWorkspaceManager;
+import MRUWorkspaceManager from "nuevebit/mru_workspace_manager";
 
+describe("MRUWorkspaceManager", function () {
     it("should get the list of managed workspaces", function () {
         let manager = new MRUWorkspaceManager(newScreen([1, 2, 3]));
         expect(manager.getWorkspaces()).toEqual([1, 2, 3]);

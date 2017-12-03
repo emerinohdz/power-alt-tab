@@ -2,16 +2,19 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-describe("GSScreen", function () {
-    const GSScreen = gs.GSScreen;
+import Screen from "gs/screen";
+
+describe("Screen", function () {
 
     it("should return the list of workspaces", function () {
-        let screen = new GSScreen({
+        let screen = new Screen({
             n_workspaces: 2,
             get_workspace_by_index: function (index) {
-                switch(index) {
-                    case 0: return 1;
-                    case 1: return 2;
+                switch (index) {
+                    case 0:
+                        return 1;
+                    case 1:
+                        return 2;
                 }
             }
         });
@@ -20,10 +23,10 @@ describe("GSScreen", function () {
         expect(screen.getWorkspaces()).toEqual([1, 2]);
     });
 
-    it("should return the active workspace", function() {
-        let screen = new GSScreen({
-            get_active_workspace: function() {
-                return 5;   
+    it("should return the active workspace", function () {
+        let screen = new Screen({
+            get_active_workspace: function () {
+                return 5;
             }
         });
 

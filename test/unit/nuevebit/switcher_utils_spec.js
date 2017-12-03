@@ -2,52 +2,45 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
+import { lookup } from "nuevebit/switcher_utils";
+
 describe("SwitcherUtils", function () {
-    var gs = nuevebit.gs;
 
     it("should lookup the starter function for GS _startSwitcher", function () {
         // singleton
-        let utils = gs.SwitcherUtils;
         let wm = newWM_startSwitcher();
-        let func = utils.lookup(wm);
+        let func = lookup(wm);
 
         expect(func).toBe(wm._startSwitcher);
     });
 
     it("should lookup the starter function for GS __startSwitcher", function () {
         // singleton
-        let utils = gs.SwitcherUtils;
         let wm = newWM__startSwitcher();
-        let func = utils.lookup(wm);
+        let func = lookup(wm);
 
         expect(func).toBe(wm.__startSwitcher);
     });
 
     it("should lookup the starter function for GS __startAppSwitcher", function () {
-        // singleton
-        let utils = gs.SwitcherUtils;
         let wm = newWM__startAppSwitcher();
-        let func = utils.lookup(wm);
+        let func = lookup(wm);
 
         expect(func).toBe(wm.__startAppSwitcher);
     });
 
     it("should lookup the starter function for GS _startAppSwitcher", function () {
-        // singleton
-        let utils = gs.SwitcherUtils;
         let wm = newWM_startAppSwitcher();
-        let func = utils.lookup(wm);
+        let func = lookup(wm);
 
         expect(func).toBe(wm._startAppSwitcher);
     });
 
     it("should fail if it cannot lookup the function with any of the known names", function () {
-        // singleton
-        let utils = gs.SwitcherUtils; 
 
         // it should fail, no function could be found
         expect(function () {
-            utils.lookup({
+            lookup({
                 startSwitcher: function () {
                     // this method name is not available in any of the existing GS
                     // versions for the WM

@@ -1,0 +1,10 @@
+## YAML Template.
+---
+language: javascript
+
+install:
+    - npm install
+
+script: 
+    - node_modules/.bin/gulp build --single=true --browser=PhantomJS && node_modules/.bin/gulp dist 
+

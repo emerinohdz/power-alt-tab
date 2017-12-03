@@ -2,78 +2,74 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-var nuevebit = nuevebit || {};
-nuevebit.gs = nuevebit.gs || {};
 
-(function (gs) {
-    const ExtensionUtils = imports.misc.extensionUtils;
-    const Utils = ExtensionUtils.getCurrentExtension().imports.utils;
-    const WSSwitcherStarter = Utils.use("nuevebit.gs.WSSwitcherStarter");
-    const AppSwitcherStarter = Utils.use("nuevebit.gs.AppSwitcherStarter");
-    const MRUWorkspaceManager = Utils.use("nuevebit.gs.MRUWorkspaceManager");
-    const SignalTracker = Utils.use("gs.SignalTracker");
-    const GSScreen = Utils.use("gs.GSScreen");
-    const Meta = imports.gi.Meta;
-    const Main = imports.ui.main;
-    const Lang = imports.lang;
- 
-    /**
-     * Takes the necessary actions to enable or disable the PowerAltTab extension.
-     * TODO: implement a DI container
-     * 
-     * @param array opts
-     * @returns {nuevebit.gs.ExtensionService}
-     */
-    gs.ExtensionService = function (opts) {
+import {Lang, Main, Meta} from "core";
+
+import Screen from "gs/screen";
+import SignalTracker from "gs/signal_tracker";
+import MRUWorkspaceManager from "nuevebit/mru_workspace_manager";
+import AppSwitcherStarter from "nuevebit/app_switcher_starter";
+import WSSwitcherStarter from "nuevebit/ws_switcher_starter";
+
+// TODO: This should be part of the API, instead of calling directly
+// GI functions (which may change more often)
+var setKeybindingsHandler = function (startFunc) {
+    Meta.keybindings_set_custom_handler(
+            'switch-group',
+            startFunc);
+
+    Meta.keybindings_set_custom_handler(
+            'switch-group-backward',
+            startFunc);
+};
+
+/**
+ * Takes the necessary actions to enable or disable the PowerAltTab extension.
+ * TODO: implement a DI container
+ * 
+ * @param array opts
+ * @returns {nuevebit.gs.ExtensionService}
+ */
+export default class ExtensionService {
+    constructor(opts) {
         opts = opts || {};
-        let signalTracker = opts.tracker || new SignalTracker();
-        let screen = opts.screen || new GSScreen(global.screen);
-        let wsManager = opts.manager || new MRUWorkspaceManager(screen);
-        let wsStarter = opts.wsStarter || new WSSwitcherStarter(wsManager);
+        this.signalTracker = opts.tracker || new SignalTracker();
+        this.screen = opts.screen || new Screen(window.global.screen);
+        this.wsManager = opts.manager || new MRUWorkspaceManager(this.screen);
+        this.wsStarter = opts.wsStarter || new WSSwitcherStarter(this.wsManager);
 
-        this.enable = function () {
-            // track worskpaces added or deleted
-            signalTracker.track(
-                    global.screen,
-                    "notify::n-workspaces",
-                    Lang.bind(wsManager, wsManager.updateWorkspaces));
+        this.opts = opts;
+    }
 
-            // track workspace switches
-            signalTracker.track(
-                    global.window_manager,
-                    "switch-workspace",
-                    Lang.bind(wsManager, wsManager.switchActiveWorkspace));
+    enable() {
+        // track worskpaces added or deleted
+        this.signalTracker.track(
+                window.global.screen,
+                "notify::n-workspaces",
+                Lang.bind(this.wsManager, this.wsManager.updateWorkspaces));
 
-            // init workspaces
-            wsManager.updateWorkspaces();
+        // track workspace switches
+        this.signalTracker.track(
+                window.global.window_manager,
+                "switch-workspace",
+                Lang.bind(this.wsManager, this.wsManager.switchActiveWorkspace));
 
-            // when enabled, show the WS switcher popup instead of the default
-            // WM switcher on switch-group
-            setKeybindingsHandler(Lang.bind(wsStarter, wsStarter.start));
-        };
+        // init workspaces
+        this.wsManager.updateWorkspaces();
 
-        this.disable = function () {
-            // untrack all tracked signals
-            signalTracker.untrackAll();
+        // when enabled, show the WS switcher popup instead of the default
+        // WM switcher on switch-group
+        setKeybindingsHandler(Lang.bind(this.wsStarter, this.wsStarter.start));
+    }
 
-            let appStarter = opts.appStarter || new AppSwitcherStarter(Main.wm);
+    disable() {
+        // untrack all tracked signals
+        this.signalTracker.untrackAll();
 
-            // show default GS switcher on switch-group
-            setKeybindingsHandler(Lang.bind(appStarter, appStarter.start));
-        };
+        let appStarter = this.opts.appStarter || new AppSwitcherStarter(Main.wm);
 
-        // TODO: This should be part of the API, instead of calling directly
-        // GI functions (which may change more often)
-        function setKeybindingsHandler(startFunc) {
-            Meta.keybindings_set_custom_handler(
-                    'switch-group',
-                    startFunc);
+        // show default GS switcher on switch-group
+        setKeybindingsHandler(Lang.bind(appStarter, appStarter.start));
+    }
 
-            Meta.keybindings_set_custom_handler(
-                    'switch-group-backward',
-                    startFunc);
-        }
-    };
-
-})(nuevebit.gs);
-
+};

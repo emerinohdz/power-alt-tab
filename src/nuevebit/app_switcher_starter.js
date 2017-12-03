@@ -2,27 +2,22 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-var nuevebit = nuevebit || {};
-nuevebit.gs = nuevebit.gs || {};
+import Lang from "core";
+import { lookup } from "nuevebit/switcher_utils";
 
 /**
  * Default SwitcherStarter, handles showing the GS switcher.
  * 
- * @returns {nuevebit.gs.GSSwitcherStarter}
+ * @returns {nuevebit.gs.AppSwitcherStarter}
  */
-(function (gs) {
-    const ExtensionUtils = imports.misc.extensionUtils;
-    const Utils = ExtensionUtils.getCurrentExtension().imports.utils;
-    const SwitcherUtils = Utils.use("nuevebit.gs.SwitcherUtils");
-    const Lang = imports.lang;
+export default class AppSwitcherStarter {
+    constructor(wm) {
+        this.wm = wm;
+        this.startFunc = lookup(wm);
+    }
 
-    gs.AppSwitcherStarter = function (wm, utils) {
-        utils = utils || SwitcherUtils;
-        let startFunc = utils.lookup(wm);
-
-        this.start = function (display, screen, win, binding) {
-            // delegate to wm startFunc
-            Lang.bind(wm, startFunc)(display, screen, win, binding);
-        };
-    };
-})(nuevebit.gs);
+    start(display, screen, win, binding) {
+        // delegate to wm startFunc
+        Lang.bind(this.wm, this.startFunc)(display, screen, win, binding);
+    }
+}
