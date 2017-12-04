@@ -13,7 +13,6 @@ var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 var argv = require("yargs").argv; // cmd arguments support
 
-var babel = require('gulp-babel');
 var KarmaServer = require('karma').Server;
 
 var webpack = require('webpack-stream');
