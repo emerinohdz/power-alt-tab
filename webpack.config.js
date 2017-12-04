@@ -7,7 +7,6 @@ var path = require('path');
 
 module.exports = {
     entry: {
-        core: "./src/core.js",
         extension: "./src/extension.js"
     },
     output: {

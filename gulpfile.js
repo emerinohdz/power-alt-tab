@@ -74,13 +74,17 @@ gulp.task("clean", function () {
 
 
 /**
- * Copy the extension to local extensions folder only
+ * Copy the extension to local extensions folder or specified installDir
  */
 gulp.task("copy:extension", function () {
     return gulp.src(["metadata.json", config.distDir + "/extension.js"])
             .pipe(gulp.dest(config.installDir));
 });
 
+/**
+ * This task uses webpack to generate a single JS extension file. It will
+ * use babel for transpiling and UMD for module handling.
+ */
 gulp.task('build', function () {
     return webpack(require("./webpack.config.js"))
             .pipe(gulp.dest(config.distDir));
