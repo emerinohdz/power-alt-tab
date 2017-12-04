@@ -2,7 +2,7 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-import Lang from "core";
+import { Lang } from "core";
 import { lookup } from "nuevebit/switcher_utils";
 
 /**
