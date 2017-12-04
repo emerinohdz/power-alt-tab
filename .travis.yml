@@ -8,6 +8,7 @@ before_deploy:
 - git config --local user.name "Edgar Merino"
 - git config --local user.email "donvodka@gmail.com"
 - git tag "$(git log --format=%h -1)"
+- git push origin --tags
 deploy:
   skip_cleanup: true
   provider: releases
