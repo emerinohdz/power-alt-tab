@@ -1,6 +1,6 @@
 /**
  * Power Alt-Tab
- * @autor: emerino <emerino at gmail dot com>
+ * @autor: emerino <dovodka at gmail dot com>
  *
  */
 

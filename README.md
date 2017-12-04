@@ -39,4 +39,4 @@ Create ZIP file in dist/ for installation through Gnome Tweak Tool
 
 # Author
 
-[Edgar Merino](https://github.com/emerinohdz) (emerino at nuevebit dot com)
+[Edgar Merino](https://github.com/emerinohdz) (donvodka at gmail dot com)
