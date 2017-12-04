@@ -25,6 +25,7 @@
     "karma-webpack": "^2.0.6",
     "underscore": "^1.6.0",
     "webpack": "^3.9.1",
+    "webpack-stream": "^4.0.0",
     "yargs": "^1.2.1"
   }
 }

@@ -11,7 +11,7 @@ module.exports = {
         extension: "./src/extension.js"
     },
     output: {
-        filename: "dist/[name].js",
+        filename: "[name].js",
         libraryTarget: 'umd',
     },
     resolve: {

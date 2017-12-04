@@ -16,6 +16,8 @@ var argv = require("yargs").argv; // cmd arguments support
 var babel = require('gulp-babel');
 var KarmaServer = require('karma').Server;
 
+var webpack = require('webpack-stream');
+
 // gulp plugins
 var gulp = require("gulp");
 var clean = require('gulp-clean');
@@ -30,8 +32,8 @@ var config = {
     srcDir: path.join(__dirname, "src"),
     distDir: path.join(__dirname, "dist"),
     installDir: installDir + metadata.uuid,
-    singleRun: argv.single || false,
-    browser: argv.browser || "Firefox"
+    singleRun: argv.singleRun || false,
+    browser: argv.browser || "PhantomJS"
 };
 
 var enableExtension = function (enable, cb) {
@@ -42,56 +44,18 @@ var enableExtension = function (enable, cb) {
             });
 };
 
-var paths = {
-    src: ['src/**.js', 'src/*/**.js'],
-    dest: 'build/js',
-    specSrc: 'test/unit/**/*.js',
-    specDest: 'build/test',
-    spec: 'build/test/*_spec.js'
-};
-
-function build(src, dst) {
-    return gulp
-            .src(src)
-            .pipe(babel({
-                presets: [
-                    "env",
-                    "es2017"
-                ],
-                plugins: [
-                    "transform-runtime",
-                    "transform-es2015-modules-umd"
-                ],
-                //moduleIds: true
-            }))
-            .pipe(gulp.dest(dst));
-}
-
-gulp.task('build-src', function () {
-    return build(paths.src, paths.dest);
-});
-
-gulp.task('build-test', function () {
-    return build(paths.specSrc, paths.specDest);
-});
-
-gulp.task("build", ["build-src", "build-test"]);
-
 /**
  * Test tasks. Uses KARMA runner.
  */
 gulp.task('test', function (done) {
     // Be sure to return the stream 
     var server = new KarmaServer({
-        configFile: __dirname + '/test/karma.conf.js',
+        configFile: __dirname + '/karma.conf.js',
         singleRun: config.singleRun,
         browsers: [config.browser]
-    }, function (exitCode) {
-        if (exitCode) {
-            process.exit(exitCode);
-        } else {
-            done();
-        }
+    }, function(exitCode) {
+        done();
+        process.exit(exitCode);
     });
 
     server.on('run_complete', function (browsers, results) {
@@ -110,23 +74,32 @@ gulp.task("clean", function () {
 
 
 /**
- * Create ZIP file for distribution to gse
- */
-gulp.task("dist", ["build", "test"], function () {
-    return gulp.src([
-        "metadata.json",
-        config.srcDir + "/**/*"
-    ])
-            .pipe(zip(metadata.uuid + ".zip"))
-            .pipe(gulp.dest(config.distDir));
-});
-
-/**
  * Copy the extension to local extensions folder only
  */
 gulp.task("copy:extension", function () {
     return gulp.src(["metadata.json", config.distDir + "/extension.js"])
             .pipe(gulp.dest(config.installDir));
+});
+
+gulp.task('build', function () {
+    return webpack(require("./webpack.config.js"))
+            .pipe(gulp.dest(config.distDir));
+});
+
+//gulp.task('build-test', function () {
+//    return build(paths.specSrc, paths.specDest);
+//});
+
+/**
+ * Create ZIP file for distribution to gse
+ */
+gulp.task("dist", ["build"], function () {
+    return gulp.src([
+        "metadata.json",
+        config.distDir + "/**/*.js"
+    ])
+            .pipe(zip(metadata.uuid + ".zip"))
+            .pipe(gulp.dest(config.distDir));
 });
 
 /**
