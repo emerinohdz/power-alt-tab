@@ -9,13 +9,6 @@ module.exports = function (config) {
         // frameworks to use
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
         frameworks: ['jasmine'],
-        // list of files / patterns to load in the browser
-        // TODO: care should be taken with the order in which these are included,
-        // if a "class" tries to be "imported" before it gets a chance to be
-        // loaded, it will fail when trying to use it (with errors regarding
-        // YouClass is not a constructor), we must find a way to load them
-        // in the correct order, or at least delay loading until actually
-        // used
         files: [
             "node_modules/underscore/underscore.js",
             "test/polyfill_gs.js",
@@ -29,7 +22,6 @@ module.exports = function (config) {
         preprocessors: {
             // add webpack as preprocessor
             "src/**/*.js": ["webpack"],
-            //'test/polyfill_gs.js': ['webpack'],
             'test/unit/*_spec.js': ['webpack'],
             'test/unit/**/*_spec.js': ['webpack']
         },
