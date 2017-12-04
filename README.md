@@ -15,7 +15,7 @@ The idea was taken from the Xmonad contrib module that does the same thing
 
 It is named Power Alt Tab because it was made back in gs 3.2, when there
 was no MRU Window Switcher available (only App Switcher), this extension
-used to replace the app switcher with a window switcher, but over the time
+used to replace the app switcher with a window switcher, but over time
 gs added its own window switcher so we only support the MRU WS switcher now.
 
 # Installation
