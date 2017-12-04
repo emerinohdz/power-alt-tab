@@ -46,7 +46,7 @@ var enableExtension = function (enable, cb) {
 /**
  * Test tasks. Uses KARMA runner.
  */
-gulp.task('test', function (done) {
+gulp.task('test', ["build"], function (done) {
     // Be sure to return the stream 
     var server = new KarmaServer({
         configFile: __dirname + '/karma.conf.js',
