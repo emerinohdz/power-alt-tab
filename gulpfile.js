@@ -96,7 +96,7 @@ gulp.task('build', function () {
 gulp.task("dist", ["build"], function () {
     return gulp.src([
         "metadata.json",
-        config.distDir + "/**/*.js"
+        config.distDir + "/extension.js"
     ])
             .pipe(zip(metadata.uuid + ".zip"))
             .pipe(gulp.dest(config.distDir));
