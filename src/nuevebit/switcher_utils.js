@@ -3,13 +3,12 @@
  */
 
 // supported function names
-var supported = [
+const supported = [
     "_startSwitcher",
     "_startAppSwitcher",
     "__startAppSwitcher",
     "__startSwitcher"
 ];
-
 /**
  * Handles lookup of the default GS start switcher method, depending
  * on the current GS version.
@@ -20,11 +19,12 @@ var supported = [
 export function lookup(wm) {
 
     let switcher;
-    supported.forEach(function (name) {
+    for (let name of supported) {
         if (typeof wm[name] !== "undefined") {
             switcher = wm[name];
+            break;
         }
-    });
+    }
 
     if (!switcher) {
         throw "No starter method available in current WM";
