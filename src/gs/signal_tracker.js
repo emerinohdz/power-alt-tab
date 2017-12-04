@@ -2,7 +2,7 @@
  * Copyright 2017 NueveBit, todos los derechos reservados.
  */
 
-var generateGUID = function () {
+function generateGUID () {
 // not truly a GUID, but works fine for our purposes
     return Math.random().toString(36).substring(2)
             + (new Date()).getTime().toString(36);
