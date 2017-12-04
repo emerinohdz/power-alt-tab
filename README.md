@@ -1,4 +1,5 @@
 # Power Alt-Tab
+[![Build Status](https://travis-ci.org/emerinohdz/power-alt-tab.svg?branch=master)](https://travis-ci.org/emerinohdz/power-alt-tab)
 
 Gnome-Shell extension that provides an MRU Workspace Switcher. The switcher
 is bound to the "switch_group" event, which means that you need to assign
