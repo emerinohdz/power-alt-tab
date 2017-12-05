@@ -1,8 +1,19 @@
 language: javascript
+sudo: required
+dist: trusty
+before_install:
+- sudo apt-get update -qq
+- sudo apt-get install -qq gjs
 install:
 - npm install
+before_script:
+- git clone https://github.com/ptomato/jasmine-gjs /tmp/jasmine-gjs
+- cd /tmp/jasmine-gjs
+- ./autogen.sh
+- make
+- sudo make install
 script:
-- "./node_modules/.bin/gulp test --singleRun=true --browser=PhantomJS && ./node_modules/.bin/gulp dist"
+- "./node_modules/.bin/gulp dist --transpile"
 before_deploy:
 # Set up git user name and tag this commit
 - git config --local user.name "Edgar Merino"
