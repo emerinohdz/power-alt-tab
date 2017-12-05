@@ -17,7 +17,6 @@ var rimraf = require('rimraf'); // rimraf directly
 
 // gulp plugins
 var gulp = require("gulp");
-var clean = require('gulp-clean');
 
 //extension metadata
 var metadata = JSON.parse(fs.readFileSync("metadata.json"));
@@ -140,7 +139,7 @@ gulp.task("install", ["copy:extension"], function (cb) {
  * Uninstall extension locally. Removes install dir and disables.
  */
 gulp.task("uninstall", ["disable"], function (cb) {
-    return gulp.src(config.installDir).pipe(clean({force: true}));
+    rimraf(config.installDir, cb);
 });
 
 
