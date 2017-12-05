@@ -6,12 +6,7 @@ before_install:
 install:
 - npm install
 before_script:
-- git clone https://github.com/ptomato/jasmine-gjs /tmp/jasmine-gjs
-- cd /tmp/jasmine-gjs
-- ./autogen.sh
-- make
-- sudo make install
-- cd "$TRAVIS_BUILD_DIR"
+- ./install-jasmine-gjs.sh
 script:
 - "./node_modules/.bin/gulp dist --transpile"
 before_deploy:
