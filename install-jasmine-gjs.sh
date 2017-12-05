@@ -1,4 +1,5 @@
 #!/bin/sh
+set -ex
 
 cd /tmp
 git clone https://github.com/ptomato/jasmine-gjs 
