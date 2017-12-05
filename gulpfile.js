@@ -17,6 +17,7 @@ var rimraf = require('rimraf'); // rimraf directly
 
 // gulp plugins
 var gulp = require("gulp");
+var gulpsync = require('gulp-sync')(gulp);
 
 //extension metadata
 var metadata = JSON.parse(fs.readFileSync("metadata.json"));
@@ -105,7 +106,7 @@ gulp.task('build', function () {
 /**
  * Create ZIP file for distribution to GSE
  */
-gulp.task("dist", ["build", "test"], function () {
+gulp.task("dist", gulpsync.sync(["build", "test"]), function () {
     return gulp.src([
         "metadata.json",
         "build " + "/extension.js"
