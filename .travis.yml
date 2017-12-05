@@ -22,4 +22,3 @@ deploy:
   file: dist/PowerAltTab@devpower.org.zip
   on:
     repo: emerinohdz/power-alt-tab
-    tags: true
