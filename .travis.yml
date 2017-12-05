@@ -11,6 +11,7 @@ before_script:
 - ./autogen.sh
 - make
 - sudo make install
+- cd "$TRAVIS_BUILD_DIR"
 script:
 - "./node_modules/.bin/gulp dist --transpile"
 before_deploy:
