@@ -72,7 +72,7 @@ const WorkspaceSwitcherPopup = new Lang.Class({
         this.parent();
 
         if (this._activateTimeout) {
-            Mainloop.source_remove(this._activateTimeout);
+            //Mainloop.source_remove(this._activateTimeout);
         }
     },
 

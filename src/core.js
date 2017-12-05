@@ -15,7 +15,6 @@
  */
 module.exports = {
     Lang: imports.lang,
-    Mainloop: imports.mainloop,
     Main: imports.ui.main,
     Meta: imports.gi.Meta,
     Shell: imports.gi.Shell,
