@@ -8,9 +8,7 @@ var glob = require("glob");
 module.exports = {
     entry: {
         extension: "./src/extension.js",
-        test: glob.sync("./test/**/*.js", {
-            ignore: "./test/web_polyfill_gs.js"
-        })
+        test: glob.sync("./test/**/*.js")
     },
     output: {
         filename: "[name].js",
