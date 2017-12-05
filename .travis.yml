@@ -1,5 +1,9 @@
 language: javascript
 sudo: required
+# This is to avoid duplicating builds
+branches:
+  except:
+    - /^b[0-9]/
 before_install:
 - sudo apt-get update -qq
 - sudo apt-get install -qq gjs
