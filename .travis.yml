@@ -8,7 +8,7 @@ install:
 before_script:
 - ./install-jasmine-gjs.sh
 script:
-- "./node_modules/.bin/gulp dist --transpile"
+- "./node_modules/.bin/gulp dist"
 before_deploy:
 # Set up git user name and tag this commit
 - git config --local user.name "Edgar Merino"
