@@ -13,6 +13,7 @@ var spawn = require('child_process').spawn;
 var argv = require("yargs").argv; // cmd arguments support
 
 var webpack = require('webpack-stream');
+var rimraf = require('rimraf'); // rimraf directly 
 
 // gulp plugins
 var gulp = require("gulp");
@@ -54,8 +55,8 @@ gulp.task("test", ["build"], function (cb) {
 /**
  * Clean build and dist dir
  */
-gulp.task("clean", function () {
-    return gulp.src([config.distDir, "build"]).pipe(clean());
+gulp.task("clean", function (cb) {
+    rimraf("{config.distDir, 'build'}", cb);
 });
 
 
@@ -108,7 +109,7 @@ gulp.task('build', function () {
 gulp.task("dist", ["build", "test"], function () {
     return gulp.src([
         "metadata.json",
-        "build "+ "/extension.js"
+        "build " + "/extension.js"
     ])
             .pipe(zip(metadata.uuid + ".zip"))
             .pipe(gulp.dest(config.distDir));
