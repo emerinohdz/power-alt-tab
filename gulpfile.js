@@ -10,10 +10,7 @@ var fs = require('fs');
 var path = require('path');
 var zip = require('gulp-zip');
 var spawn = require('child_process').spawn;
-var exec = require('child_process').exec;
 var argv = require("yargs").argv; // cmd arguments support
-
-var KarmaServer = require('karma').Server;
 
 var webpack = require('webpack-stream');
 
@@ -32,7 +29,8 @@ var config = {
     distDir: path.join(__dirname, "dist"),
     installDir: installDir + metadata.uuid,
     singleRun: argv.singleRun || false,
-    browser: argv.browser || "PhantomJS"
+    browser: argv.browser || "PhantomJS",
+    transpile: argv.transpile || false
 };
 
 var enableExtension = function (enable, cb) {
@@ -44,31 +42,20 @@ var enableExtension = function (enable, cb) {
 };
 
 /**
- * Test tasks. Uses KARMA runner.
+ * Native GJS testing using jasmine-gjs.
  */
-gulp.task('test', ["build"], function (done) {
-    // Be sure to return the stream 
-    var server = new KarmaServer({
-        configFile: __dirname + '/karma.conf.js',
-        singleRun: config.singleRun,
-        browsers: [config.browser]
-    }, function(exitCode) {
-        done();
-        process.exit(exitCode);
-    });
-
-    server.on('run_complete', function (browsers, results) {
-        //done((results.error) ? results.error : null);
-    });
-
-    server.start();
+gulp.task("test", ["build"], function (cb) {
+    spawn("jasmine", ["build/test.js"], {stdio: "inherit", stdout: "inherit"})
+            .on("exit", function () {
+                cb();
+            });
 });
 
 /**
- * Clean dist dir
+ * Clean build and dist dir
  */
 gulp.task("clean", function () {
-    return gulp.src([config.distDir]).pipe(clean());
+    return gulp.src([config.distDir, "build"]).pipe(clean());
 });
 
 
@@ -85,21 +72,43 @@ gulp.task("copy:extension", function () {
  * use babel for transpiling and UMD for module handling.
  */
 gulp.task('build', function () {
-    return webpack(require("./webpack.config.js"))
-            .pipe(gulp.dest(config.distDir));
+    var webpackConfig = require("./webpack.config.js");
+
+    // transpile on demand
+    if (config.transpile) {
+        webpackConfig.module = {
+            rules: [
+                {
+                    test: /\.js$/,
+                    exclude: /(node_modules|bower_components)/,
+                    use: {
+                        loader: 'babel-loader',
+                        options: {
+                            presets: [
+                                require('babel-preset-env'),
+                            ],
+                            plugins: [
+                                require('babel-plugin-transform-runtime'),
+                                require('babel-plugin-transform-es2015-modules-umd'),
+                            ]
+                        }
+                    }
+                },
+            ]
+        };
+    }
+
+    return webpack(webpackConfig)
+            .pipe(gulp.dest("build"));
 });
 
-//gulp.task('build-test', function () {
-//    return build(paths.specSrc, paths.specDest);
-//});
-
 /**
- * Create ZIP file for distribution to gse
+ * Create ZIP file for distribution to GSE
  */
-gulp.task("dist", ["build"], function () {
+gulp.task("dist", ["build", "test"], function () {
     return gulp.src([
         "metadata.json",
-        config.distDir + "/extension.js"
+        "build "+ "/extension.js"
     ])
             .pipe(zip(metadata.uuid + ".zip"))
             .pipe(gulp.dest(config.distDir));
@@ -120,14 +129,14 @@ gulp.task("disable", function (cb) {
 });
 
 /**
- * Install extension locally.
+ * Install extension locally (copies and enables).
  */
 gulp.task("install", ["copy:extension"], function (cb) {
     return gulp.start("enable");
 });
 
 /**
- * Uninstall extension locally. Removes install dir.
+ * Uninstall extension locally. Removes install dir and disables.
  */
 gulp.task("uninstall", ["disable"], function (cb) {
     return gulp.src(config.installDir).pipe(clean({force: true}));
@@ -152,12 +161,5 @@ gulp.task("restart:gnome-shell", ["copy:extension"], function () {
 
 });
 
-/**
- * Watch files for changes and reinstall then restart gs
- */
-gulp.task("default", ["build"], function () {
-    gulp.watch([
-        config.srcDir + "/**/*",
-        "test/**/*.js"
-    ], ["build"]);
-});
+// run dist by default, which builds and tests the project
+gulp.task("default", ["dist"]);

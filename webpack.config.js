@@ -3,11 +3,14 @@
  */
 
 var path = require('path');
-
+var glob = require("glob");
 
 module.exports = {
     entry: {
-        extension: "./src/extension.js"
+        extension: "./src/extension.js",
+        test: glob.sync("./test/**/*.js", {
+            ignore: "./test/web_polyfill_gs.js"
+        })
     },
     output: {
         filename: "[name].js",
@@ -17,26 +20,6 @@ module.exports = {
         modules: [
             path.resolve('./src'),
             'node_modules'
-        ]
-    },
-    module: {
-        rules: [
-            {
-                test: /\.js$/,
-                exclude: /(node_modules|bower_components)/,
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        presets: [
-                            require('babel-preset-env'),
-                        ],
-                        plugins: [
-                            require('babel-plugin-transform-runtime'),
-                            require('babel-plugin-transform-es2015-modules-umd'),
-                        ]
-                    }
-                }
-            },
         ]
     },
 };

@@ -13,3 +13,6 @@
 
 # node deps
 /node_modules/
+
+# tmp files
+/tmp/
