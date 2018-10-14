@@ -15,7 +15,7 @@ export default class WSSwitcherStarter {
         this.manager = manager;
     }
 
-    start(display, screen, win, binding) {
+    start(display, win, binding) {
         let modifiers = binding.get_modifiers();
         let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
 
