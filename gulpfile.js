@@ -28,6 +28,7 @@ var installDir = argv.installDir || path.join(process.env.HOME, ".local/share/gn
 var config = {
     srcDir: path.join(__dirname, "src"),
     distDir: path.join(__dirname, "dist"),
+    buildDir: path.join(__dirname, "build"),
     installDir: installDir + metadata.uuid,
     singleRun: argv.singleRun || false,
     browser: argv.browser || "PhantomJS",
@@ -64,7 +65,7 @@ gulp.task("clean", function (cb) {
  * Copy the extension to local extensions folder or specified installDir
  */
 gulp.task("copy:extension", function () {
-    return gulp.src(["metadata.json", config.distDir + "/extension.js"])
+    return gulp.src(["metadata.json", config.buildDir + "/extension.js"])
             .pipe(gulp.dest(config.installDir));
 });
 
