@@ -110,7 +110,7 @@ gulp.task('build', function () {
 gulp.task("dist", gulpsync.sync(["build", "test"]), function () {
     return gulp.src([
         "metadata.json",
-        "build " + "/extension.js"
+        config.buildDir + "/extension.js"
     ])
             .pipe(zip(metadata.uuid + ".zip"))
             .pipe(gulp.dest(config.distDir));
