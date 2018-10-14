@@ -33,7 +33,7 @@ global.imports = {
 
 global.window.global = {
 
-    screen: {
+    workspace_manager: {
         connect: function (signal, cb) {},
         disconnect: function (id) {}
     },
