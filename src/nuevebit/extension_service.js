@@ -34,17 +34,24 @@ export default class ExtensionService {
     constructor(opts) {
         opts = opts || {};
         this.signalTracker = opts.tracker || new SignalTracker();
-        this.screen = opts.screen || new Screen(window.global.screen);
+        this.screen = opts.screen || new Screen(this._getScreen());
         this.wsManager = opts.manager || new MRUWorkspaceManager(this.screen);
         this.wsStarter = opts.wsStarter || new WSSwitcherStarter(this.wsManager);
 
         this.opts = opts;
     }
 
+    _getScreen() {
+        // gs 3.30 removed global.screen
+        return (typeof window.global.screen !== "undefined")
+                ? window.global.screen
+                : window.global.workspace_manager;
+    }
+
     enable() {
         // track worskpaces added or deleted
         this.signalTracker.track(
-                window.global.screen,
+                this._getScreen(),
                 "notify::n-workspaces",
                 Lang.bind(this.wsManager, this.wsManager.updateWorkspaces));
 
