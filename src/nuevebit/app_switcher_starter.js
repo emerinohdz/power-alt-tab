@@ -16,7 +16,7 @@ export default class AppSwitcherStarter {
         this.startFunc = lookup(wm);
     }
 
-    start(display, screen, win, binding) {
+    start(display, win, binding) {
         // delegate to wm startFunc
         Lang.bind(this.wm, this.startFunc)(display, screen, win, binding);
     }
