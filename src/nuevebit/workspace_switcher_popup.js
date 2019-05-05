@@ -4,8 +4,8 @@ import {Meta, Main, Lang, Mainloop, Clutter, SwitcherPopup} from "core";
 
 // TODO: there are problems when extending using ES6 classes and transpiling with
 // babel, calling super constructor throws an error
-const WorkspaceSwitcherPopup = new Lang.Class({
-    Name: 'WorkspaceSwitcherPopup',
+const PowerWorkspaceSwitcherPopup = new Lang.Class({
+    Name: 'PowerWorkspaceSwitcherPopup',
     Extends: SwitcherPopup,
 
     _init: function (workspaces) {
@@ -82,4 +82,4 @@ const WorkspaceSwitcherPopup = new Lang.Class({
 
 });
 
-export default WorkspaceSwitcherPopup;
+export default PowerWorkspaceSwitcherPopup;

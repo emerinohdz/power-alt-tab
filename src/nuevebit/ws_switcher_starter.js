@@ -3,12 +3,12 @@
  */
 
 import {Meta} from "core";
-import WorkspaceSwitcherPopup from "nuevebit/workspace_switcher_popup";
+import PowerWorkspaceSwitcherPopup from "nuevebit/workspace_switcher_popup";
 
 /**
  * WS SwitcherStarter, handles showing the Workspace Switcher popup.
  * 
- * @param {nuevebit.gs.WorkspaceSwitcher} manager
+ * @param {nuevebit.gs.PowerWorkspaceSwitcher} manager
  */
 export default class WSSwitcherStarter {
     constructor(manager) {
@@ -20,7 +20,7 @@ export default class WSSwitcherStarter {
         let backwards = modifiers & Meta.VirtualModifier.SHIFT_MASK;
 
         // use the WS switcher popup
-        let popup = new WorkspaceSwitcherPopup(this.manager.getWorkspaces());
+        let popup = new PowerWorkspaceSwitcherPopup(this.manager.getWorkspaces());
 
         if (!popup.show(backwards, binding.get_name(), binding.get_mask())) {
             popup.destroy();
